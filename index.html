@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a0a10">
+<title>DSN Places</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #130810;
+  --surface:  #1e0f16;
+  --surface2: #271420;
+  --border:   rgba(200,120,150,0.12);
+  --text:     #f0e6ea;
+  --muted:    #8a6070;
+  --mauve:    #c084a0;
+  --mauve-lt: #e8b4cb;
+  --mauve-dk: #7a3d5a;
+  --red:      #d94f6a;
+  --red-lt:   #f09090;
+  --rose:     #f2c4d0;
+  --gold:     #e8b87a;
+  --cream:    #fdf0f4;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* grain */
+body::after {
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:999;opacity:0.5;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  padding: 80px 32px 56px;
+  text-align: center;
+  overflow: hidden;
+}
+.hero-glow {
+  position: absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(217,79,106,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 80% 90%, rgba(192,132,160,0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 10% 80%, rgba(122,61,90,0.08) 0%, transparent 60%);
+}
+.hero-lines {
+  position:absolute;inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(200,120,150,0.018) 3px,rgba(200,120,150,0.018) 4px);
+  pointer-events:none;
+}
+.hero-eyebrow {
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:5px;color:var(--mauve);
+  text-transform:uppercase;margin-bottom:18px;
+  opacity:0;animation:up .6s .1s ease forwards;
+}
+.hero-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(68px,16vw,150px);
+  line-height:.88;font-weight:700;
+  background:linear-gradient(150deg,var(--rose) 0%,var(--red) 45%,var(--mauve) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  opacity:0;animation:up .7s .25s ease forwards;
+}
+.hero-subtitle {
+  font-family:'Playfair Display',serif;
+  font-style:italic;font-size:clamp(15px,3.5vw,22px);
+  color:var(--mauve-lt);margin-top:14px;
+  opacity:0;animation:up .6s .42s ease forwards;
+}
+.hero-names {
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:4px;color:var(--muted);
+  margin-top:12px;
+  opacity:0;animation:up .5s .58s ease forwards;
+}
+.hero-names span{color:var(--red);}
+.hero-divider {
+  width:60px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+  margin:28px auto 0;
+  opacity:0;animation:up .5s .72s ease forwards;
+}
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ── STICKY CONTROLS ── */
+.sticky-top {
+  position:sticky;top:0;z-index:100;
+  background:rgba(19,8,16,0.95);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:10px 20px 8px;
+}
+.search-input {
+  width:100%;background:var(--surface);
+  border:1px solid var(--border);
+  padding:11px 16px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:16px;
+  border-radius:8px;outline:none;
+  -webkit-appearance:none;
+  transition:border-color .2s;
+  margin-bottom:8px;
+}
+.search-input::placeholder{color:var(--muted);}
+.search-input:focus{border-color:rgba(217,79,106,.45);}
+
+.filters {
+  display:flex;gap:8px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;padding-bottom:2px;
+}
+.filters::-webkit-scrollbar{display:none;}
+.filter-btn {
+  flex-shrink:0;
+  font-family:'Space Mono',monospace;font-size:10px;
+  letter-spacing:1px;padding:8px 16px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;
+  border-radius:20px;transition:all .2s;
+  white-space:nowrap;min-height:36px;
+  text-transform:uppercase;
+}
+.filter-btn.active,
+.filter-btn:active {
+  border-color:var(--red);color:var(--red);
+  background:rgba(217,79,106,.1);
+}
+
+/* ── CITY HEADER ── */
+.city-header {
+  display:flex;align-items:center;gap:16px;
+  padding:32px 24px 0;
+}
+.city-label {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(28px,7vw,48px);font-weight:700;
+  color:var(--text);
+}
+.city-tag {
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:3px;
+  padding:5px 12px;
+  border:1px solid var(--red);
+  color:var(--red);border-radius:2px;
+  text-transform:uppercase;
+}
+
+/* ── SECTIONS ── */
+.sections{padding:20px 20px 100px;display:grid;gap:36px;}
+
+.section{}
+.section-header {
+  display:flex;align-items:baseline;gap:14px;
+  margin-bottom:16px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.section-header::after {
+  content:'';position:absolute;bottom:-1px;left:0;
+  width:48px;height:1.5px;background:var(--red);
+}
+.section-title {
+  font-family:'Playfair Display',serif;
+  font-size:22px;color:var(--text);font-weight:700;
+}
+.section-emoji{font-size:18px;}
+.section-count {
+  font-family:'Space Mono',monospace;
+  font-size:9px;color:var(--muted);letter-spacing:2px;
+}
+
+/* ── CARDS ── */
+.card-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:13px 14px;border-radius:4px;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:8px;
+  transition:background .2s;
+}
+.card::before {
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2.5px;background:var(--card-color,var(--muted));
+}
+.card:active{background:var(--surface2);}
+
+/* rating tiers via color */
+.r10{--card-color:#e8b87a;}
+.r9 {--card-color:#d94f6a;}
+.r8 {--card-color:#c084a0;}
+.r7 {--card-color:#9b7ab4;}
+.r6 {--card-color:#6b8ab4;}
+.r5 {--card-color:#5a7a70;}
+.r-low{--card-color:#5a3a4a;}
+.no-r{--card-color:var(--mauve-dk);}
+
+.card-name {
+  font-size:12.5px;font-weight:500;
+  line-height:1.3;color:var(--text);
+}
+.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.card-rating {
+  font-family:'Space Mono',monospace;
+  font-size:10.5px;font-weight:700;color:var(--gold);
+}
+.card-bar{flex:1;height:2px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;max-width:50px;}
+.card-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:1px;}
+.card-note{
+  font-size:9px;color:var(--muted);
+  font-family:'Space Mono',monospace;
+  letter-spacing:.5px;
+}
+.card-badge {
+  font-family:'Space Mono',monospace;font-size:7.5px;
+  padding:2px 6px;border-radius:2px;letter-spacing:.5px;
+}
+.badge-special{background:rgba(217,79,106,.15);border:1px solid rgba(217,79,106,.3);color:var(--red);}
+.badge-tbd{background:rgba(192,132,160,.12);border:1px solid rgba(192,132,160,.25);color:var(--mauve);}
+
+/* No-rating card (things to do) */
+.card-norating .card-name{font-size:13px;}
+
+/* ── TO DO SECTION ── */
+.todo-grid{display:grid;grid-template-columns:1fr;gap:7px;}
+.todo-card {
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--border);
+  padding:13px 15px;border-radius:4px;
+  border-left:2.5px solid var(--mauve);
+  transition:background .2s;
+}
+.todo-card:active{background:var(--surface2);}
+.todo-card.nyc-only{border-left-color:var(--red);}
+.todo-num {
+  font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--muted);min-width:24px;
+}
+.todo-text{font-size:13px;font-weight:500;flex:1;color:var(--text);}
+.todo-tag {
+  font-family:'Space Mono',monospace;font-size:8px;
+  padding:2px 7px;border-radius:10px;letter-spacing:.5px;
+  white-space:nowrap;
+}
+.tag-nyc{background:rgba(217,79,106,.15);color:var(--red);border:1px solid rgba(217,79,106,.25);}
+.tag-chi{background:rgba(192,132,160,.15);color:var(--mauve);border:1px solid rgba(192,132,160,.25);}
+.tag-both{background:rgba(232,184,122,.1);color:var(--gold);border:1px solid rgba(232,184,122,.2);}
+
+/* ── NYC TBD SECTION ── */
+.tbd-section {
+  margin:0 0 0 0;
+  padding:24px 20px 40px;
+}
+.tbd-banner {
+  background:linear-gradient(135deg,rgba(217,79,106,.08),rgba(192,132,160,.06));
+  border:1px solid rgba(217,79,106,.2);
+  border-radius:6px;padding:24px 20px;
+  position:relative;overflow:hidden;
+}
+.tbd-banner::before {
+  content:'NYC';
+  position:absolute;right:16px;bottom:-10px;
+  font-family:'Playfair Display',serif;
+  font-size:90px;font-weight:700;
+  color:rgba(217,79,106,.05);pointer-events:none;
+}
+.tbd-title {
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:700;color:var(--text);
+  margin-bottom:6px;
+}
+.tbd-sub {
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:3px;color:var(--red);
+  margin-bottom:20px;
+}
+.tbd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tbd-card {
+  background:rgba(255,255,255,.03);
+  border:1px dashed rgba(200,120,150,.2);
+  border-radius:4px;padding:14px 14px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.tbd-card-name{font-size:13px;font-weight:500;color:var(--mauve-lt);}
+.tbd-card-cat {
+  font-family:'Space Mono',monospace;
+  font-size:8px;color:var(--muted);letter-spacing:1px;
+}
+.tbd-placeholder {
+  border-style:dashed;border-color:rgba(200,120,150,.12);
+  background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  min-height:60px;
+}
+.tbd-placeholder-txt{font-family:'Space Mono',monospace;font-size:9px;color:rgba(200,120,150,.3);letter-spacing:2px;}
+
+/* ── FOOTER ── */
+.footer {
+  text-align:center;padding:28px 20px calc(28px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--border);
+}
+.footer-main{
+  font-family:'Playfair Display',serif;
+  font-style:italic;font-size:14px;color:var(--mauve);
+}
+.footer-sub{
+  font-family:'Space Mono',monospace;
+  font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:6px;
+}
+.footer-hearts{font-size:16px;margin-top:8px;}
+
+/* hidden */
+.card.hidden,.todo-card.hidden{display:none;}
+.section.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-lines"></div>
+  <div class="hero-eyebrow">★ our places ★</div>
+  <div class="hero-title">DSN</div>
+  <div class="hero-subtitle">Places & Vibes</div>
+  <div class="hero-names"><span>Sneha</span> &amp; <span>Daivik</span></div>
+  <div class="hero-divider"></div>
+</div>
+
+<!-- STICKY CONTROLS -->
+<div class="sticky-top">
+  <input class="search-input" type="text" id="searchInput" placeholder="🔍 Search places..." oninput="filterAll()" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('vibes',this)">✨ Vibes</button>
+    <button class="filter-btn" onclick="setFilter('food',this)">🍽 Food</button>
+    <button class="filter-btn" onclick="setFilter('drinks',this)">🍷 Drinks</button>
+    <button class="filter-btn" onclick="setFilter('dessert',this)">🍰 Dessert</button>
+    <button class="filter-btn" onclick="setFilter('todo',this)">📍 To Do</button>
+    <button class="filter-btn" onclick="setFilter('top',this)">🔥 9+</button>
+  </div>
+</div>
+
+<!-- CITY HEADER -->
+<div class="city-header">
+  <div class="city-label">Chicago</div>
+  <div class="city-tag">S + D</div>
+</div>
+
+<!-- SECTIONS -->
+<div class="sections" id="mainSections">
+
+  <!-- VIBES -->
+  <div class="section" data-cat="vibes">
+    <div class="section-header">
+      <span class="section-emoji">✨</span>
+      <div class="section-title">Vibes</div>
+    </div>
+    <div class="card-grid" id="grid-vibes"></div>
+  </div>
+
+  <!-- FOOD -->
+  <div class="section" data-cat="food">
+    <div class="section-header">
+      <span class="section-emoji">🍽</span>
+      <div class="section-title">Food</div>
+    </div>
+    <div class="card-grid" id="grid-food"></div>
+  </div>
+
+  <!-- DRINKS -->
+  <div class="section" data-cat="drinks">
+    <div class="section-header">
+      <span class="section-emoji">🍷</span>
+      <div class="section-title">Drinks</div>
+    </div>
+    <div class="card-grid" id="grid-drinks"></div>
+  </div>
+
+  <!-- DESSERT -->
+  <div class="section" data-cat="dessert">
+    <div class="section-header">
+      <span class="section-emoji">🍰</span>
+      <div class="section-title">Dessert</div>
+    </div>
+    <div class="card-grid" id="grid-dessert"></div>
+  </div>
+
+  <!-- THINGS TO DO -->
+  <div class="section" data-cat="todo">
+    <div class="section-header">
+      <span class="section-emoji">📍</span>
+      <div class="section-title">Things To Do</div>
+    </div>
+    <div class="todo-grid" id="grid-todo"></div>
+  </div>
+
+</div>
+
+<!-- NYC TBD -->
+<div class="tbd-section">
+  <div class="tbd-banner">
+    <div class="tbd-title">New York City</div>
+    <div class="tbd-sub">★ LIST TBD ★</div>
+    <div class="tbd-grid" id="tbd-grid"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-main">our memories, our places</div>
+  <div class="footer-sub">DSN · Sneha & Daivik</div>
+  <div class="footer-hearts">🌹</div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+
+const vibes = [
+  { name:"Le Piano — drinks & vibe", rating:10, note:"🎹", special:true },
+  { name:"Bulls Game", rating:10, special:true },
+  { name:"The Bean", rating:3, note:"lol" },
+  { name:"Walking Michigan Ave", rating:6 },
+  { name:"Best View in the City (Adler)", rating:7 },
+  { name:"Lincoln Park View", rating:8 },
+  { name:"Shedd Aquarium 🐟", rating:10, note:"S+D 10.25.25", special:true },
+  { name:"Christkindel Market", rating:5 },
+  { name:"Jewel Osco", rating:10, special:true },
+  { name:"Pendry Chicago — FHR #Amex", rating:10, special:true },
+  { name:"St Patrick's Wrigley Crawl 🍀", rating:null },
+];
+
+const food = [
+  { name:"Gyu Kaku", rating:7 },
+  { name:"Los Comales Taqueria", rating:9.9, special:true },
+  { name:"Cava", rating:7 },
+  { name:"Ema", rating:6.5 },
+  { name:"Aba", rating:7.4 },
+  { name:"Gibsons Italia", rating:8.9 },
+  { name:"Busy Burger 🍔", rating:5 },
+  { name:"Velvet Taco", rating:5.5 },
+  { name:"Lil Baba Reeba", rating:9 },
+  { name:"Cafe Baba Reeba", rating:8 },
+  { name:"Sunda", rating:1 },
+  { name:"Santa Monica's Summer House", rating:9 },
+  { name:"Dough Bros", rating:7, note:"dine & dash 😅" },
+  { name:"PBNJ", rating:4 },
+  { name:"Wildberry 🐝", rating:9 },
+  { name:"Prince", rating:7 },
+  { name:"Oiistar Ramen 🍜", rating:6.5 },
+  { name:"Gino's East", rating:7 },
+  { name:"Blue Sushi Sake", rating:8 },
+  { name:"Trivoli Tavern 🥮", rating:9.9, special:true },
+  { name:"Lou Malnati's", rating:7 },
+  { name:"Costera Tulum", rating:2 },
+  { name:"Gung Ho Ramen 🍜", rating:7.6 },
+  { name:"LIA Tavern", rating:7 },
+  { name:"Buffalo Wild Wings 🦬", rating:4 },
+  { name:"Alpana", rating:6 },
+  { name:"Gilt Bar 🍷", rating:9 },
+  { name:"Ventuex", rating:6 },
+  { name:"Pizzeria Portofino", rating:6.4 },
+  { name:"Pendry Room Service 🥜", rating:5 },
+  { name:"Sifr", rating:8.2 },
+  { name:"SALT 🍔", rating:8.9 },
+  { name:"Honest", rating:7 },
+  { name:"Chowresta", rating:5 },
+  { name:"Quarntino", rating:5.5 },
+  { name:"Yasemi", rating:8.6 },
+  { name:"Habibi Mediterranean Grill", rating:4 },
+];
+
+const drinks = [
+  { name:"Nisos Prime Lounge", rating:8 },
+  { name:"Tetto", rating:11, note:"🔥", special:true },
+  { name:"Estero FM", rating:10, note:"SN rated", special:true },
+  { name:"Texan Taco Bar", rating:6, note:"happy hr" },
+  { name:"Grapes & Grains 🎹", rating:8 },
+  { name:"The Pearl", rating:8 },
+  { name:"Sixty Four Winery", rating:4.5 },
+  { name:"Kitchen and Kocktails", rating:7 },
+  { name:"Pendry Bar", rating:5.5 },
+  { name:"Draft Picks", rating:null },
+  { name:"Hiezmans", rating:6 },
+  { name:"She-naggin", rating:null },
+  { name:"Cruz Blanca", rating:null },
+  { name:"Broken Shaker", rating:8 },
+  { name:"Old Crow", rating:null },
+  { name:"Sluggers", rating:null },
+  { name:"Federalas", rating:null },
+];
+
+const dessert = [
+  { name:"Andy's Frozen Custard", rating:null },
+  { name:"Jeni's Ice Cream", rating:null },
+  { name:"Kilwins", rating:null },
+  { name:"Sticky Date Cake @ Trivoli 🥮", rating:null, special:true },
+  { name:"Cookie Skillet @ Gilt Bar", rating:null, special:true },
+  { name:"Kilwins Evanston", rating:null },
+  { name:"Insomnia Cookies 🍪", rating:null },
+];
+
+const todos = [
+  // Chicago originals
+  { name:"Pani Puri Eating Contest 🌶", cat:"both", note:"who wins?" },
+  { name:"Pottery Painting 🏺", cat:"both" },
+  { name:"Live Music After Dinner 🎶", cat:"both" },
+  { name:"Picnic in the Park 🧺", cat:"both" },
+  { name:"Watch a Knicks Game 🏀", cat:"nyc", note:"NYC only" },
+  { name:"Bagel Crawl in NYC 🥯", cat:"nyc", note:"the real deal" },
+  { name:"ZA w the ZA ifykyk 🍕", cat:"nyc" },
+  // NYC additions
+  { name:"Stroll the High Line at Dusk 🌆", cat:"nyc", note:"elevated park, best views" },
+  { name:"SUMMIT One Vanderbilt 🔭", cat:"nyc", note:"best views + art installs" },
+  { name:"Walk the Brooklyn Bridge 🌉", cat:"nyc", note:"free & iconic" },
+  { name:"DUMBO at Golden Hour 📸", cat:"nyc", note:"best skyline backdrop" },
+  { name:"Row Boats in Central Park 🚣", cat:"nyc", note:"Central Park Boathouse" },
+  { name:"Couples Cooking Class 🧑‍🍳", cat:"both", note:"pasta or sushi" },
+  { name:"Sunset Sail on the Hudson 🌅", cat:"nyc", note:"skyline reflection" },
+  { name:"Chelsea Market Food Tour 🥐", cat:"nyc", note:"foodie heaven" },
+  { name:"Rooftop bar hopping in Midtown 🍸", cat:"nyc" },
+  { name:"Governor's Island Bike Ride 🚴", cat:"nyc", note:"Statue of Liberty views" },
+  { name:"Brooklyn Botanic Garden 🌸", cat:"nyc", note:"esp. cherry blossom season" },
+  { name:"Paint & Sip Night 🎨", cat:"both", note:"wine + masterpiece" },
+  { name:"Ghost Tour of Lower Manhattan 👻", cat:"nyc", note:"spooky date night" },
+  { name:"The Campbell Bar @ Grand Central 🍸", cat:"nyc", note:"hidden gem, old-school glam" },
+  { name:"Coney Island Summer Day 🎡", cat:"nyc", note:"carnival + beach" },
+  { name:"Ice Skating @ Rockefeller Center ⛸", cat:"nyc", note:"winter only" },
+  { name:"Roosevelt Island Tram Ride 🚡", cat:"nyc", note:"sky-ride secret gem" },
+  { name:"Chocolate Tasting Class @ Tache 🍫", cat:"nyc", note:"Lower East Side" },
+  { name:"Flamenco Show @ Socarrat 💃", cat:"nyc", note:"free Tuesdays 6:30pm" },
+];
+
+const nycTBD = [
+  { name:"Restaurant TBD", cat:"Food" },
+  { name:"Rooftop Bar TBD", cat:"Drinks" },
+  { name:"Hotel TBD", cat:"Stay" },
+  { name:"Vibe Spot TBD", cat:"Vibes" },
+  { name:"Dessert Spot TBD", cat:"Dessert" },
+  { name:"Hidden Gem TBD", cat:"Discovery" },
+];
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function ratingClass(r) {
+  if (r === null || r === undefined) return 'no-r';
+  if (r >= 10) return 'r10';
+  if (r >= 9)  return 'r9';
+  if (r >= 8)  return 'r8';
+  if (r >= 7)  return 'r7';
+  if (r >= 6)  return 'r6';
+  if (r >= 5)  return 'r5';
+  return 'r-low';
+}
+
+function makeCard(item, cat) {
+  const rc = ratingClass(item.rating);
+  const pct = item.rating ? Math.min(100, Math.round((item.rating/10)*100)) : 0;
+  const hasRating = item.rating !== null && item.rating !== undefined;
+  const ratingDisplay = item.rating === 11 ? '11/10 🔥' : (hasRating ? `${item.rating}/10` : '—');
+  const specialBadge = item.special ? '<span class="card-badge badge-special">✦ fave</span>' : '';
+  return `<div class="card ${rc}" data-cat="${cat}" data-name="${item.name.toLowerCase()}" data-rating="${item.rating||0}">
+    <div class="card-name">${item.name}</div>
+    <div class="card-bottom">
+      <div class="card-rating">${ratingDisplay}</div>
+      ${hasRating ? `<div class="card-bar"><div class="card-fill" style="width:${pct}%"></div></div>` : ''}
+      ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
+      ${specialBadge}
+    </div>
+  </div>`;
+}
+
+function makeTodo(item, i) {
+  const tagClass = item.cat === 'nyc' ? 'tag-nyc' : item.cat === 'both' ? 'tag-both' : 'tag-chi';
+  const tagLabel = item.cat === 'nyc' ? 'NYC' : item.cat === 'both' ? 'ANY' : 'CHI';
+  const nycClass = item.cat === 'nyc' ? 'nyc-only' : '';
+  const noteHtml = item.note ? `<span class="card-note">${item.note}</span>` : '';
+  return `<div class="todo-card ${nycClass}" data-cat="todo" data-name="${item.name.toLowerCase()}">
+    <div class="todo-num">${String(i+1).padStart(2,'0')}</div>
+    <div style="flex:1">
+      <div class="todo-text">${item.name}</div>
+      ${noteHtml}
+    </div>
+    <span class="todo-tag ${tagClass}">${tagLabel}</span>
+  </div>`;
+}
+
+function makeTBD(item) {
+  if (!item) return `<div class="tbd-card tbd-placeholder"><span class="tbd-placeholder-txt">TBD</span></div>`;
+  return `<div class="tbd-card">
+    <div class="tbd-card-name">${item.name}</div>
+    <div class="tbd-card-cat">${item.cat}</div>
+  </div>`;
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+document.getElementById('grid-vibes').innerHTML   = vibes.map(i=>makeCard(i,'vibes')).join('');
+document.getElementById('grid-food').innerHTML    = food.map(i=>makeCard(i,'food')).join('');
+document.getElementById('grid-drinks').innerHTML  = drinks.map(i=>makeCard(i,'drinks')).join('');
+document.getElementById('grid-dessert').innerHTML = dessert.map(i=>makeCard(i,'dessert')).join('');
+document.getElementById('grid-todo').innerHTML    = todos.map((t,i)=>makeTodo(t,i)).join('');
+document.getElementById('tbd-grid').innerHTML     = nycTBD.map(makeTBD).join('') + makeTBD(null) + makeTBD(null);
+
+// ── FILTER ─────────────────────────────────────────────────────────────────
+let activeFilter = 'all';
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterAll();
+}
+
+function filterAll() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+
+  document.querySelectorAll('.card').forEach(card => {
+    const cat    = card.dataset.cat;
+    const name   = card.dataset.name || '';
+    const rating = parseFloat(card.dataset.rating) || 0;
+    let show = true;
+    if (activeFilter === 'vibes'   && cat !== 'vibes')   show = false;
+    if (activeFilter === 'food'    && cat !== 'food')     show = false;
+    if (activeFilter === 'drinks'  && cat !== 'drinks')   show = false;
+    if (activeFilter === 'dessert' && cat !== 'dessert')  show = false;
+    if (activeFilter === 'todo'    && cat !== 'todo')     show = false;
+    if (activeFilter === 'top'     && rating < 9)         show = false;
+    if (q && !name.includes(q)) show = false;
+    card.classList.toggle('hidden', !show);
+  });
+
+  document.querySelectorAll('.todo-card').forEach(card => {
+    const name = card.dataset.name || '';
+    let show = !['vibes','food','drinks','dessert','top'].includes(activeFilter);
+    if (q && !name.includes(q)) show = false;
+    card.classList.toggle('hidden', !show);
+  });
+
+  // hide empty sections
+  document.querySelectorAll('#mainSections .section').forEach(sec => {
+    const visibleCards = sec.querySelectorAll('.card:not(.hidden), .todo-card:not(.hidden)');
+    sec.classList.toggle('hidden', visibleCards.length === 0);
+  });
+}
+</script>
+</body>
+</html>

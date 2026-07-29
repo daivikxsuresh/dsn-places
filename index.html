@@ -87,6 +87,28 @@
   --star:      "✶";
 }
 
+/* ── PHILADELPHIA: liberty-bell patina + brick ── */
+:root[data-city="phl"] {
+  --bg:        #100c0e;
+  --surface:   #1b1417;
+  --surface-2: #261b1f;
+  --border:    rgba(96,196,174,.14);
+  --border-2:  rgba(96,196,174,.32);
+  --text:      #f4eee9;
+  --muted:     #a3928f;
+  --accent:    #60c4ae;
+  --accent-lt: #a8e6d7;
+  --accent-dk: #2c6b5e;
+  --accent-rgb: 96,196,174;
+  --second:    #d4614e;
+  --second-rgb: 212,97,78;
+  --glow-1:    rgba(96,196,174,.13);
+  --glow-2:    rgba(212,97,78,.13);
+  --warn:      #d4614e;
+  --warn-rgb:  212,97,78;
+  --star:      "✦";
+}
+
 * { margin:0; padding:0; box-sizing:border-box; }
 
 html { scroll-behavior:smooth; }
@@ -159,6 +181,8 @@ body::after {
   background:linear-gradient(155deg,var(--accent-lt) 0%,var(--accent) 42%,var(--second) 100%);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
 }
+/* long city name needs its own step down so it never overflows */
+:root[data-city="phl"] .hero-title { font-size:clamp(30px,9vw,104px); }
 .hero-sub {
   font-family:'Playfair Display',serif; font-style:italic;
   font-size:clamp(14px,3.4vw,20px); color:var(--accent-lt); margin-top:var(--s3);
@@ -196,9 +220,10 @@ body::after {
 .skyline { position:relative; z-index:1; margin-top:var(--s6); line-height:0; }
 .skyline svg { display:block; width:100%; height:auto; }
 .skyline svg { fill:var(--accent); opacity:.16; }
-.skyline .sky-nyc, .skyline .sky-chi { display:none; }
+.skyline .sky-nyc, .skyline .sky-chi, .skyline .sky-phl { display:none; }
 :root[data-city="nyc"] .skyline .sky-nyc { display:block; }
 :root[data-city="chi"] .skyline .sky-chi { display:block; }
+:root[data-city="phl"] .skyline .sky-phl { display:block; }
 
 /* ═══════════════════════════════════════════════════════════
    STICKY CONTROLS
@@ -334,6 +359,14 @@ body::after {
 .b-goback  { background:rgba(var(--accent-rgb),.12); border:1px solid rgba(var(--accent-rgb),.30); color:var(--accent); }
 .b-repeat  { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); color:var(--muted); }
 .b-new     { background:rgba(var(--accent-rgb),.16); border:1px solid rgba(var(--accent-rgb),.35); color:var(--accent-lt); }
+.b-tbd     { background:transparent; border:1px dashed rgba(var(--accent-rgb),.35); color:var(--accent); }
+.b-soon    { background:rgba(var(--second-rgb),.14); border:1px solid rgba(var(--second-rgb),.34); color:var(--second); }
+
+/* unvisited / planned spots read as outlines, not filled cards */
+.card.is-tbd { background:transparent; border-style:dashed; }
+.card.is-tbd::before { opacity:.45; }
+.card.is-tbd .card-name { color:var(--accent-lt); }
+.card.is-tbd:hover { background:rgba(var(--accent-rgb),.04); }
 
 /* rating tiers */
 .r-elite { --card-color:var(--rt-elite); }
@@ -457,8 +490,9 @@ body::after {
   <div class="hero-inner">
 
     <div class="city-switch" role="group" aria-label="Choose city">
-      <button class="city-btn" id="btn-nyc" aria-pressed="true"  onclick="setCity('nyc')">New York</button>
-      <button class="city-btn" id="btn-chi" aria-pressed="false" onclick="setCity('chi')">Chicago</button>
+      <button class="city-btn" data-city="nyc" aria-pressed="true"  onclick="setCity('nyc')">New York</button>
+      <button class="city-btn" data-city="chi" aria-pressed="false" onclick="setCity('chi')">Chicago</button>
+      <button class="city-btn" data-city="phl" aria-pressed="false" onclick="setCity('phl')">Philly</button>
     </div>
 
     <div class="hero-eyebrow" id="heroEyebrow">★ our places ★</div>
@@ -473,6 +507,10 @@ body::after {
     <!-- NEW YORK -->
     <svg class="sky-nyc" viewBox="0 0 1200 150" preserveAspectRatio="none">
       <path d="M0,150 L0,118 L38,118 L38,96 L74,96 L74,120 L108,120 L108,72 L118,72 L118,40 L124,40 L124,6 L127,6 L127,40 L133,40 L133,72 L143,72 L143,120 L188,120 L188,92 L226,92 L226,128 L262,128 L262,84 L292,84 L292,54 L300,54 L300,18 L303,18 L303,54 L311,54 L311,84 L338,84 L338,124 L392,124 L392,102 L430,102 L430,74 L462,74 L462,112 L512,112 L512,88 L552,88 L552,128 L594,128 L594,58 L614,58 L614,32 L620,32 L620,2 L623,2 L623,32 L630,32 L630,58 L650,58 L650,128 L698,128 L698,98 L736,98 L736,118 L778,118 L778,78 L808,78 L808,108 L856,108 L856,88 L896,88 L896,124 L936,124 L936,66 L956,66 L956,42 L961,42 L961,10 L964,10 L964,42 L982,42 L982,124 L1028,124 L1028,98 L1066,98 L1066,114 L1106,114 L1106,92 L1148,92 L1148,120 L1200,120 L1200,150 Z"/>
+    </svg>
+    <!-- PHILADELPHIA — City Hall tower, Liberty Place spires, Comcast -->
+    <svg class="sky-phl" viewBox="0 0 1200 150" preserveAspectRatio="none">
+      <path d="M0,150 L0,124 L46,124 L46,102 L88,102 L88,128 L128,128 L128,72 L146,72 L146,40 L152,40 L152,16 L155,16 L155,40 L161,40 L161,72 L180,72 L180,128 L224,128 L224,98 L262,98 L262,120 L300,120 L300,52 L316,52 L316,28 L322,28 L322,6 L325,6 L325,28 L332,28 L332,52 L350,52 L350,120 L396,120 L396,94 L436,94 L436,124 L478,124 L478,66 L500,66 L500,38 L506,38 L506,12 L509,12 L509,38 L518,38 L518,66 L538,66 L538,124 L586,124 L586,100 L626,100 L626,118 L668,118 L668,58 L690,58 L690,30 L696,30 L696,4 L699,4 L699,30 L708,30 L708,58 L728,58 L728,118 L776,118 L776,90 L818,90 L818,122 L860,122 L860,74 L890,74 L890,46 L896,46 L896,20 L899,20 L899,46 L908,46 L908,74 L930,74 L930,122 L978,122 L978,96 L1018,96 L1018,116 L1060,116 L1060,80 L1092,80 L1092,110 L1136,110 L1136,92 L1172,92 L1172,120 L1200,120 L1200,150 Z"/>
     </svg>
     <!-- CHICAGO -->
     <svg class="sky-chi" viewBox="0 0 1200 150" preserveAspectRatio="none">
@@ -538,7 +576,7 @@ body::after {
 const DATA = {
 
   nyc: {
-    label:"NEW YORK", eyebrow:"★ the live list ★", sub:"Places & Vibes",
+    label:"NEW YORK", eyebrow:"★ the live list ★", sub:"Places & Vibes", tag:"nyc", theme:"#07090f",
     vibes: [
       { name:"BBQ 🍖", rating:10, special:true },
       { name:"Centurion Lounge ⭐️", rating:9, note:"amex", special:true },
@@ -621,7 +659,7 @@ const DATA = {
   },
 
   chi: {
-    label:"CHICAGO", eyebrow:"✶ where it started ✶", sub:"The Archive",
+    label:"CHICAGO", eyebrow:"✶ where it started ✶", sub:"The Archive", tag:"chi", theme:"#050f18",
     vibes: [
       { name:"Le Piano 🎹", rating:10, note:"drinks & vibe", special:true },
       { name:"Bulls Game 🏀", rating:10, special:true },
@@ -710,6 +748,42 @@ const DATA = {
       { name:"Couples Cooking Class 🧑‍🍳", any:true, note:"pasta or sushi" },
       { name:"Paint & Sip Night 🎨", any:true },
     ],
+  },
+
+  phl: {
+    label:"PHILADELPHIA", eyebrow:"✦ sept 4–6 · akka weekend ✦", sub:"Nothing Rated Yet", tag:"phl", theme:"#100c0e",
+    vibes: [
+      { name:"AKKA World Kannada Conference 🎪", rating:null, soon:true, note:"sept 4–6 · pa convention center" },
+      { name:"Loews Philadelphia 🏨", rating:null, tbd:true, note:"psfs art deco · ask for the 33rd flr" },
+      { name:"Rocky Steps @ Art Museum 🥊", rating:null, tbd:true },
+      { name:"LOVE Park 💗", rating:null, tbd:true },
+    ],
+    food: [
+      { name:"Bank & Bourbon 🥃", rating:null, tbd:true, note:"loews · where the $100 credit goes" },
+      { name:"Reading Terminal Market 🥨", rating:null, tbd:true },
+      { name:"Cheesesteak Showdown 🥩", rating:null, tbd:true, note:"pat's vs geno's vs angelo's" },
+      { name:"Restaurant TBD 🍽", rating:null, tbd:true },
+    ],
+    drinks: [
+      { name:"Hotel Bar TBD 🍸", rating:null, tbd:true },
+      { name:"Rooftop TBD 🌆", rating:null, tbd:true },
+    ],
+    dessert: [
+      { name:"Franklin Fountain 🍨", rating:null, tbd:true },
+      { name:"Federal Donuts 🍩", rating:null, tbd:true },
+    ],
+    todo: [
+      { name:"AKKA Conference 🎪", next:true, note:"sept 4–6 · the whole reason" },
+      { name:"Reading Terminal Market 🥨", next:true },
+      { name:"Cheesesteak Showdown 🥩", next:true, note:"settle it once and for all" },
+      { name:"Rocky Steps Run 🥊", next:true },
+      { name:"Liberty Bell + Independence Hall 🔔" },
+      { name:"Magic Gardens 🎨", note:"mosaic maze, south st" },
+      { name:"Elfreth's Alley 🧱", note:"oldest residential street in the us" },
+      { name:"Italian Market Walk 🍅" },
+      { name:"Spruce Street Harbor Park 🌈", note:"hammocks + string lights" },
+      { name:"Franklin Institute 🔬" },
+    ],
   }
 };
 
@@ -786,9 +860,11 @@ function cardHTML(p) {
     p.special ? '<span class="badge b-fave">✦ fave</span>' : '',
     goBack    ? '<span class="badge b-goback">↩ go back</span>' : '',
     p.visits > 1 ? `<span class="badge b-repeat">${p.visits}×</span>` : '',
+    p.soon    ? '<span class="badge b-soon">◷ upcoming</span>' : '',
+    p.tbd     ? '<span class="badge b-tbd">tbd</span>' : '',
   ].join('');
 
-  return `<article class="card ${tier} ${goBack ? 'go-back' : ''}">
+  return `<article class="card ${tier} ${goBack ? 'go-back' : ''} ${p.tbd || p.soon ? 'is-tbd' : ''}">
     <div class="card-name">${esc(p.name)}</div>
     ${p.note ? `<div class="card-note">${esc(p.note)}</div>` : ''}
     <div class="card-meta">
@@ -800,7 +876,7 @@ function cardHTML(p) {
 }
 
 function todoHTML(t, i) {
-  const tag = t.next ? ['tag-next','up next'] : t.any ? ['tag-any','any city'] : ['tag-city', city === 'nyc' ? 'nyc' : 'chi'];
+  const tag = t.next ? ['tag-next','up next'] : t.any ? ['tag-any','any city'] : ['tag-city', DATA[city].tag];
   return `<div class="todo-card ${t.next ? 'up-next' : ''}">
     <span class="todo-num">${String(i+1).padStart(2,'0')}</span>
     <div style="flex:1">
@@ -913,11 +989,11 @@ function render() {
    CONTROLS
    ═══════════════════════════════════════════════════════════ */
 function setCity(c) {
+  if (!DATA[c]) c = 'nyc';
   city = c;
   document.documentElement.dataset.city = c;
-  document.getElementById('btn-nyc').setAttribute('aria-pressed', c === 'nyc');
-  document.getElementById('btn-chi').setAttribute('aria-pressed', c === 'chi');
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', c === 'nyc' ? '#07090f' : '#050f18');
+  document.querySelectorAll('.city-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.city === c));
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', DATA[c].theme);
   try { localStorage.setItem('dsn-city', c); } catch(e) {}
   renderHero();
   render();
@@ -964,7 +1040,7 @@ function unlock() {
 (function init() {
   let saved = null;
   try { saved = localStorage.getItem('dsn-city'); } catch(e) {}
-  setCity(saved === 'chi' ? 'chi' : 'nyc');
+  setCity(DATA[saved] ? saved : 'nyc');
 
   if (sessionStorage.getItem('dsn-unlocked') === '1') {
     unlock();

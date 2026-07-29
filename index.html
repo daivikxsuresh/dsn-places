@@ -1,741 +1,975 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-city="nyc">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a0a10">
+<meta name="theme-color" content="#07090f">
 <title>DSN Places</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════ */
 :root {
-  --bg:       #130810;
-  --surface:  #1e0f16;
-  --surface2: #271420;
-  --border:   rgba(200,120,150,0.12);
-  --text:     #f0e6ea;
-  --muted:    #8a6070;
-  --mauve:    #c084a0;
-  --mauve-lt: #e8b4cb;
-  --mauve-dk: #7a3d5a;
-  --red:      #d94f6a;
-  --red-lt:   #f09090;
-  --rose:     #f2c4d0;
-  --gold:     #e8b87a;
-  --cream:    #fdf0f4;
+  /* spacing — 8pt grid */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
+  --s12: 48px; --s16: 64px;
+
+  /* type scale */
+  --t-xs: 9px; --t-sm: 10.5px; --t-md: 13px;
+  --t-lg: 15px; --t-xl: 20px; --t-2xl: 26px;
+
+  /* radii */
+  --r-sm: 4px; --r-md: 8px; --r-lg: 14px; --r-pill: 999px;
+
+  /* rating ramp — shared across cities so tiers read the same everywhere */
+  --rt-elite: #f2c94c;
+  --rt-9:     #f28f5b;
+  --rt-8:     #e0698b;
+  --rt-7:     #8e9ec9;
+  --rt-6:     #6d7c98;
+  --rt-5:     #5b6474;
+  --rt-low:   #7a3b46;
+  --rt-none:  #4a4a58;
+
+  --ease: cubic-bezier(.22,.61,.36,1);
 }
 
-*{margin:0;padding:0;box-sizing:border-box;}
+/* ── NEW YORK: midnight + brass ── */
+:root[data-city="nyc"] {
+  --bg:        #07090f;
+  --surface:   #10141f;
+  --surface-2: #171d2b;
+  --border:    rgba(224,178,60,.14);
+  --border-2:  rgba(224,178,60,.30);
+  --text:      #f4f1e8;
+  --muted:     #9a9aab;
+  --accent:    #e0b23c;
+  --accent-lt: #f7dc95;
+  --accent-dk: #7a5f1c;
+  --accent-rgb: 224,178,60;
+  --second:    #5b8fd6;
+  --second-rgb: 91,143,214;
+  --glow-1:    rgba(224,178,60,.16);
+  --glow-2:    rgba(91,143,214,.12);
+  --warn:      #cf6058;
+  --warn-rgb:  207,96,88;
+  --star:      "★";
+}
+
+/* ── CHICAGO: lakefront blue + flag red ── */
+:root[data-city="chi"] {
+  --bg:        #050f18;
+  --surface:   #0c1a26;
+  --surface-2: #122534;
+  --border:    rgba(65,182,230,.14);
+  --border-2:  rgba(65,182,230,.32);
+  --text:      #eaf4fa;
+  --muted:     #8ba3b4;
+  --accent:    #41b6e6;
+  --accent-lt: #9fdff8;
+  --accent-dk: #1d5f80;
+  --accent-rgb: 65,182,230;
+  --second:    #e4415c;
+  --second-rgb: 228,65,92;
+  --glow-1:    rgba(65,182,230,.14);
+  --glow-2:    rgba(228,65,92,.14);
+  --warn:      #e4415c;
+  --warn-rgb:  228,65,92;
+  --star:      "✶";
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior:smooth; }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
+  font-family:'DM Sans',system-ui,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
   padding-bottom: env(safe-area-inset-bottom);
+  transition: background-color .5s var(--ease), color .5s var(--ease);
 }
 
-/* grain */
+/* film grain */
 body::after {
-  content:'';position:fixed;inset:0;
+  content:'';position:fixed;inset:0;z-index:900;pointer-events:none;opacity:.45;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-  pointer-events:none;z-index:999;opacity:0.5;
 }
 
-/* ── HERO ── */
-.hero {
-  position: relative;
-  padding: 80px 32px 56px;
-  text-align: center;
-  overflow: hidden;
-}
-.hero-glow {
-  position: absolute;inset:0;
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+
+.mono { font-family:'Space Mono',monospace; }
+.serif { font-family:'Playfair Display',serif; }
+
+/* ═══════════════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════════════ */
+.hero { position:relative; padding:var(--s10) var(--s5) 0; overflow:hidden; text-align:center; }
+.hero-fx { position:absolute; inset:0; pointer-events:none; }
+.hero-fx::before {
+  content:'';position:absolute;inset:0;
   background:
-    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(217,79,106,0.18) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 80% 90%, rgba(192,132,160,0.1) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 35% at 10% 80%, rgba(122,61,90,0.08) 0%, transparent 60%);
+    radial-gradient(ellipse 75% 55% at 50% -8%, var(--glow-1) 0%, transparent 62%),
+    radial-gradient(ellipse 45% 40% at 88% 82%, var(--glow-2) 0%, transparent 60%);
+  transition:background .5s var(--ease);
 }
-.hero-lines {
-  position:absolute;inset:0;
-  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(200,120,150,0.018) 3px,rgba(200,120,150,0.018) 4px);
-  pointer-events:none;
+.hero-fx::after {
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.012) 3px,rgba(255,255,255,.012) 4px);
 }
+.hero-inner { position:relative; z-index:2; }
+
+/* city switch */
+.city-switch {
+  display:inline-flex; gap:var(--s1); padding:var(--s1);
+  border:1px solid var(--border); border-radius:var(--r-pill);
+  background:rgba(0,0,0,.35); backdrop-filter:blur(10px);
+  margin-bottom:var(--s6);
+}
+.city-btn {
+  font-family:'Space Mono',monospace; font-size:var(--t-sm); letter-spacing:2.5px;
+  text-transform:uppercase; padding:10px 20px; min-height:40px;
+  border:0; border-radius:var(--r-pill); background:transparent;
+  color:var(--muted); cursor:pointer; transition:all .3s var(--ease);
+}
+.city-btn[aria-pressed="true"] { background:var(--accent); color:var(--bg); font-weight:700; }
+.city-btn:not([aria-pressed="true"]):hover { color:var(--text); }
+
 .hero-eyebrow {
-  font-family:'Space Mono',monospace;
-  font-size:10px;letter-spacing:5px;color:var(--mauve);
-  text-transform:uppercase;margin-bottom:18px;
-  opacity:0;animation:up .6s .1s ease forwards;
+  font-family:'Space Mono',monospace; font-size:var(--t-xs);
+  letter-spacing:5px; text-transform:uppercase; color:var(--accent);
+  margin-bottom:var(--s3);
 }
 .hero-title {
-  font-family:'Playfair Display',serif;
-  font-size:clamp(68px,16vw,150px);
-  line-height:.88;font-weight:700;
-  background:linear-gradient(150deg,var(--rose) 0%,var(--red) 45%,var(--mauve) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  opacity:0;animation:up .7s .25s ease forwards;
+  font-family:'Playfair Display',serif; font-weight:900;
+  font-size:clamp(46px,13vw,132px); line-height:.86; letter-spacing:-.02em;
+  background:linear-gradient(155deg,var(--accent-lt) 0%,var(--accent) 42%,var(--second) 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
 }
-.hero-subtitle {
-  font-family:'Playfair Display',serif;
-  font-style:italic;font-size:clamp(15px,3.5vw,22px);
-  color:var(--mauve-lt);margin-top:14px;
-  opacity:0;animation:up .6s .42s ease forwards;
+.hero-sub {
+  font-family:'Playfair Display',serif; font-style:italic;
+  font-size:clamp(14px,3.4vw,20px); color:var(--accent-lt); margin-top:var(--s3);
+  opacity:.85;
 }
 .hero-names {
-  font-family:'Space Mono',monospace;
-  font-size:10px;letter-spacing:4px;color:var(--muted);
-  margin-top:12px;
-  opacity:0;animation:up .5s .58s ease forwards;
+  font-family:'Space Mono',monospace; font-size:var(--t-xs);
+  letter-spacing:4px; color:var(--muted); margin-top:var(--s3);
 }
-.hero-names span{color:var(--red);}
-.hero-divider {
-  width:60px;height:1px;
-  background:linear-gradient(90deg,transparent,var(--red),transparent);
-  margin:28px auto 0;
-  opacity:0;animation:up .5s .72s ease forwards;
-}
-@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.hero-names b { color:var(--second); font-weight:400; }
 
-/* ── STICKY CONTROLS ── */
+.fade-swap { animation:fadeUp .55s var(--ease); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+
+/* stats */
+.stats {
+  display:flex; justify-content:center; flex-wrap:wrap;
+  gap:var(--s2); margin-top:var(--s6);
+}
+.stat {
+  flex:1 1 68px; max-width:120px;
+  border:1px solid var(--border); border-radius:var(--r-md);
+  background:rgba(255,255,255,.02); padding:var(--s3) var(--s2);
+}
+.stat-num {
+  font-family:'Playfair Display',serif; font-weight:700;
+  font-size:var(--t-xl); color:var(--accent-lt); line-height:1;
+}
+.stat-label {
+  font-family:'Space Mono',monospace; font-size:7.5px; letter-spacing:1.4px;
+  color:var(--muted); text-transform:uppercase; margin-top:6px; line-height:1.4;
+}
+
+/* skyline */
+.skyline { position:relative; z-index:1; margin-top:var(--s6); line-height:0; }
+.skyline svg { display:block; width:100%; height:auto; }
+.skyline svg { fill:var(--accent); opacity:.16; }
+.skyline .sky-nyc, .skyline .sky-chi { display:none; }
+:root[data-city="nyc"] .skyline .sky-nyc { display:block; }
+:root[data-city="chi"] .skyline .sky-chi { display:block; }
+
+/* ═══════════════════════════════════════════════════════════
+   STICKY CONTROLS
+   ═══════════════════════════════════════════════════════════ */
 .sticky-top {
-  position:sticky;top:0;z-index:100;
-  background:rgba(19,8,16,0.95);
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  position:sticky; top:0; z-index:100;
+  background:color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
   border-bottom:1px solid var(--border);
-  padding:10px 20px 8px;
+  padding:var(--s3) var(--s4) var(--s2);
 }
+.controls-row { display:flex; gap:var(--s2); margin-bottom:var(--s2); max-width:1100px; margin-inline:auto; }
 .search-input {
-  width:100%;background:var(--surface);
-  border:1px solid var(--border);
-  padding:11px 16px;color:var(--text);
-  font-family:'DM Sans',sans-serif;font-size:16px;
-  border-radius:8px;outline:none;
-  -webkit-appearance:none;
+  flex:1; background:var(--surface); border:1px solid var(--border);
+  padding:11px var(--s4); color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:16px;
+  border-radius:var(--r-md); outline:none; -webkit-appearance:none;
   transition:border-color .2s;
-  margin-bottom:8px;
 }
-.search-input::placeholder{color:var(--muted);}
-.search-input:focus{border-color:rgba(217,79,106,.45);}
+.search-input::placeholder { color:var(--muted); }
+.search-input:focus { border-color:var(--border-2); }
+.sort-btn {
+  flex-shrink:0; min-height:44px; padding:0 var(--s4);
+  font-family:'Space Mono',monospace; font-size:var(--t-xs); letter-spacing:1px;
+  background:var(--surface); border:1px solid var(--border); color:var(--muted);
+  border-radius:var(--r-md); cursor:pointer; text-transform:uppercase; transition:all .2s;
+}
+.sort-btn:hover { color:var(--text); border-color:var(--border-2); }
 
 .filters {
-  display:flex;gap:8px;
-  overflow-x:auto;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;padding-bottom:2px;
+  display:flex; gap:var(--s2); overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none; padding-bottom:2px; max-width:1100px; margin-inline:auto;
 }
-.filters::-webkit-scrollbar{display:none;}
+.filters::-webkit-scrollbar { display:none; }
 .filter-btn {
-  flex-shrink:0;
-  font-family:'Space Mono',monospace;font-size:10px;
-  letter-spacing:1px;padding:8px 16px;
-  border:1px solid var(--border);background:transparent;
-  color:var(--muted);cursor:pointer;
-  border-radius:20px;transition:all .2s;
-  white-space:nowrap;min-height:36px;
-  text-transform:uppercase;
+  flex-shrink:0; font-family:'Space Mono',monospace; font-size:var(--t-xs);
+  letter-spacing:1px; padding:9px var(--s4); min-height:38px;
+  border:1px solid var(--border); background:transparent; color:var(--muted);
+  cursor:pointer; border-radius:var(--r-pill); white-space:nowrap;
+  text-transform:uppercase; transition:all .2s;
 }
-.filter-btn.active,
-.filter-btn:active {
-  border-color:var(--red);color:var(--red);
-  background:rgba(217,79,106,.1);
+.filter-btn:hover { color:var(--text); }
+.filter-btn[aria-pressed="true"] {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(var(--accent-rgb),.12);
 }
 
-/* ── CITY HEADER ── */
-.city-header {
-  display:flex;align-items:center;gap:16px;
-  padding:32px 24px 0;
+/* ═══════════════════════════════════════════════════════════
+   GO-BACK RAIL
+   ═══════════════════════════════════════════════════════════ */
+.rail-wrap { padding:var(--s8) 0 0; max-width:1100px; margin-inline:auto; }
+.rail-head { padding:0 var(--s5); display:flex; align-items:baseline; gap:var(--s3); flex-wrap:wrap; }
+.rail-title {
+  font-family:'Playfair Display',serif; font-size:var(--t-2xl);
+  font-weight:700; color:var(--text);
 }
-.city-label {
-  font-family:'Playfair Display',serif;
-  font-size:clamp(28px,7vw,48px);font-weight:700;
-  color:var(--text);
+.rail-note { font-family:'Space Mono',monospace; font-size:var(--t-xs); color:var(--muted); letter-spacing:1.5px; }
+.rail {
+  display:flex; gap:var(--s2); overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none; padding:var(--s4) var(--s5) var(--s2);
+  scroll-snap-type:x mandatory;
 }
-.city-tag {
-  font-family:'Space Mono',monospace;
-  font-size:9px;letter-spacing:3px;
-  padding:5px 12px;
-  border:1px solid var(--red);
-  color:var(--red);border-radius:2px;
-  text-transform:uppercase;
+.rail::-webkit-scrollbar { display:none; }
+.rail-card {
+  flex:0 0 152px; scroll-snap-align:start;
+  background:linear-gradient(160deg,var(--surface-2),var(--surface));
+  border:1px solid var(--border); border-radius:var(--r-md);
+  padding:var(--s3) var(--s3) var(--s3) var(--s4);
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; gap:var(--s3);
+  min-height:104px;
 }
+.rail-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--card-color,var(--accent)); }
+.rail-rank {
+  font-family:'Space Mono',monospace; font-size:var(--t-xs);
+  color:var(--muted); letter-spacing:1px;
+}
+.rail-name { font-size:var(--t-md); font-weight:500; line-height:1.28; }
+.rail-foot { display:flex; align-items:center; justify-content:space-between; gap:var(--s2); }
+.rail-score {
+  font-family:'Space Mono',monospace; font-weight:700; font-size:var(--t-md);
+  color:var(--card-color,var(--accent));
+}
+.rail-cat { font-size:12px; opacity:.75; }
 
-/* ── SECTIONS ── */
-.sections{padding:20px 20px 100px;display:grid;gap:36px;}
-
-.section{}
+/* ═══════════════════════════════════════════════════════════
+   SECTIONS + CARDS
+   ═══════════════════════════════════════════════════════════ */
+.sections { padding:var(--s8) var(--s5) var(--s16); display:grid; gap:var(--s10); max-width:1100px; margin-inline:auto; }
 .section-header {
-  display:flex;align-items:baseline;gap:14px;
-  margin-bottom:16px;padding-bottom:10px;
-  border-bottom:1px solid var(--border);
-  position:relative;
+  display:flex; align-items:baseline; gap:var(--s3);
+  margin-bottom:var(--s4); padding-bottom:var(--s3);
+  border-bottom:1px solid var(--border); position:relative;
 }
-.section-header::after {
-  content:'';position:absolute;bottom:-1px;left:0;
-  width:48px;height:1.5px;background:var(--red);
-}
-.section-title {
-  font-family:'Playfair Display',serif;
-  font-size:22px;color:var(--text);font-weight:700;
-}
-.section-emoji{font-size:18px;}
-.section-count {
-  font-family:'Space Mono',monospace;
-  font-size:9px;color:var(--muted);letter-spacing:2px;
-}
+.section-header::after { content:''; position:absolute; bottom:-1px; left:0; width:52px; height:2px; background:var(--accent); }
+.section-emoji { font-size:var(--t-lg); }
+.section-title { font-family:'Playfair Display',serif; font-size:var(--t-2xl); font-weight:700; }
+.section-count { font-family:'Space Mono',monospace; font-size:var(--t-xs); color:var(--muted); letter-spacing:2px; margin-left:auto; }
 
-/* ── CARDS ── */
-.card-grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-}
+.card-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s2); }
+@media (min-width:620px) { .card-grid { grid-template-columns:repeat(3,1fr); gap:var(--s3); } }
+@media (min-width:900px) { .card-grid { grid-template-columns:repeat(4,1fr); } }
 
 .card {
-  background:var(--surface);
-  border:1px solid var(--border);
-  padding:13px 14px;border-radius:4px;
-  position:relative;overflow:hidden;
-  display:flex;flex-direction:column;gap:8px;
-  transition:background .2s;
+  background:var(--surface); border:1px solid var(--border);
+  padding:var(--s3) var(--s3) var(--s3) var(--s4);
+  border-radius:var(--r-sm); position:relative; overflow:hidden;
+  display:flex; flex-direction:column; gap:var(--s2);
+  transition:background .2s, border-color .2s, transform .2s var(--ease);
 }
-.card::before {
-  content:'';position:absolute;left:0;top:0;bottom:0;
-  width:2.5px;background:var(--card-color,var(--muted));
-}
-.card:active{background:var(--surface2);}
+.card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2.5px; background:var(--card-color,var(--rt-none)); }
+.card:hover { background:var(--surface-2); border-color:var(--border-2); transform:translateY(-2px); }
+.card.go-back { box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.10); }
 
-/* rating tiers via color */
-.r10{--card-color:#e8b87a;}
-.r9 {--card-color:#d94f6a;}
-.r8 {--card-color:#c084a0;}
-.r7 {--card-color:#9b7ab4;}
-.r6 {--card-color:#6b8ab4;}
-.r5 {--card-color:#5a7a70;}
-.r-low{--card-color:#5a3a4a;}
-.no-r{--card-color:var(--mauve-dk);}
+.card-name { font-size:var(--t-md); font-weight:500; line-height:1.3; }
+.card-meta { display:flex; align-items:center; gap:var(--s2); margin-top:auto; }
+.card-score {
+  font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+  color:var(--card-color,var(--muted)); white-space:nowrap;
+}
+.card-bar { flex:1; height:2px; background:rgba(255,255,255,.07); border-radius:1px; overflow:hidden; max-width:56px; }
+.card-fill { height:100%; background:var(--card-color,var(--muted)); border-radius:1px; }
+.card-note {
+  font-size:var(--t-xs); color:var(--muted);
+  font-family:'Space Mono',monospace; letter-spacing:.3px; line-height:1.4;
+}
+.badges { display:flex; flex-wrap:wrap; gap:4px; }
+.badge {
+  font-family:'Space Mono',monospace; font-size:7.5px; letter-spacing:.6px;
+  padding:2px 6px; border-radius:2px; text-transform:uppercase; white-space:nowrap;
+}
+.b-fave    { background:rgba(var(--second-rgb),.14); border:1px solid rgba(var(--second-rgb),.32); color:var(--second); }
+.b-goback  { background:rgba(var(--accent-rgb),.12); border:1px solid rgba(var(--accent-rgb),.30); color:var(--accent); }
+.b-repeat  { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); color:var(--muted); }
+.b-new     { background:rgba(var(--accent-rgb),.16); border:1px solid rgba(var(--accent-rgb),.35); color:var(--accent-lt); }
 
-.card-name {
-  font-size:12.5px;font-weight:500;
-  line-height:1.3;color:var(--text);
-}
-.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:6px;}
-.card-rating {
-  font-family:'Space Mono',monospace;
-  font-size:10.5px;font-weight:700;color:var(--gold);
-}
-.card-bar{flex:1;height:2px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;max-width:50px;}
-.card-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:1px;}
-.card-note{
-  font-size:9px;color:var(--muted);
-  font-family:'Space Mono',monospace;
-  letter-spacing:.5px;
-}
-.card-badge {
-  font-family:'Space Mono',monospace;font-size:7.5px;
-  padding:2px 6px;border-radius:2px;letter-spacing:.5px;
-}
-.badge-special{background:rgba(217,79,106,.15);border:1px solid rgba(217,79,106,.3);color:var(--red);}
-.badge-tbd{background:rgba(192,132,160,.12);border:1px solid rgba(192,132,160,.25);color:var(--mauve);}
+/* rating tiers */
+.r-elite { --card-color:var(--rt-elite); }
+.r9  { --card-color:var(--rt-9); }
+.r8  { --card-color:var(--rt-8); }
+.r7  { --card-color:var(--rt-7); }
+.r6  { --card-color:var(--rt-6); }
+.r5  { --card-color:var(--rt-5); }
+.r-low  { --card-color:var(--rt-low); }
+.r-none { --card-color:var(--rt-none); }
 
-/* No-rating card (things to do) */
-.card-norating .card-name{font-size:13px;}
-
-/* ── TO DO SECTION ── */
-.todo-grid{display:grid;grid-template-columns:1fr;gap:7px;}
+/* ── to-do list ── */
+.todo-grid { display:grid; grid-template-columns:1fr; gap:6px; }
+@media (min-width:760px) { .todo-grid { grid-template-columns:1fr 1fr; gap:var(--s2); } }
 .todo-card {
-  display:flex;align-items:center;gap:12px;
-  background:var(--surface);border:1px solid var(--border);
-  padding:13px 15px;border-radius:4px;
-  border-left:2.5px solid var(--mauve);
-  transition:background .2s;
+  display:flex; align-items:center; gap:var(--s3);
+  background:var(--surface); border:1px solid var(--border);
+  border-left:2.5px solid var(--rt-none);
+  padding:var(--s3) var(--s4); border-radius:var(--r-sm);
+  transition:background .2s, border-color .2s;
 }
-.todo-card:active{background:var(--surface2);}
-.todo-card.nyc-only{border-left-color:var(--red);}
-.todo-num {
-  font-family:'Space Mono',monospace;
-  font-size:10px;color:var(--muted);min-width:24px;
-}
-.todo-text{font-size:13px;font-weight:500;flex:1;color:var(--text);}
+.todo-card:hover { background:var(--surface-2); }
+.todo-card.up-next { border-left-color:var(--accent); }
+.todo-num { font-family:'Space Mono',monospace; font-size:var(--t-sm); color:var(--muted); min-width:22px; }
+.todo-text { font-size:var(--t-md); font-weight:500; }
 .todo-tag {
-  font-family:'Space Mono',monospace;font-size:8px;
-  padding:2px 7px;border-radius:10px;letter-spacing:.5px;
-  white-space:nowrap;
+  font-family:'Space Mono',monospace; font-size:7.5px; letter-spacing:.6px;
+  padding:3px 8px; border-radius:var(--r-pill); white-space:nowrap; margin-left:auto;
 }
-.tag-nyc{background:rgba(217,79,106,.15);color:var(--red);border:1px solid rgba(217,79,106,.25);}
-.tag-chi{background:rgba(192,132,160,.15);color:var(--mauve);border:1px solid rgba(192,132,160,.25);}
-.tag-both{background:rgba(232,184,122,.1);color:var(--gold);border:1px solid rgba(232,184,122,.2);}
+.tag-next { background:rgba(var(--accent-rgb),.15); color:var(--accent); border:1px solid rgba(var(--accent-rgb),.3); }
+.tag-any  { background:rgba(var(--second-rgb),.12); color:var(--second); border:1px solid rgba(var(--second-rgb),.25); }
+.tag-city { background:rgba(255,255,255,.04); color:var(--muted); border:1px solid rgba(255,255,255,.1); }
 
-/* ── NYC TBD SECTION ── */
-.tbd-section {
-  margin:0 0 0 0;
-  padding:24px 20px 40px;
+/* ── the crimes ── */
+.crimes { max-width:1100px; margin:0 auto; padding:0 var(--s5) var(--s12); }
+.crimes-box {
+  border:1px dashed rgba(var(--warn-rgb),.28); border-radius:var(--r-md);
+  background:rgba(var(--warn-rgb),.04); padding:var(--s5);
 }
-.tbd-banner {
-  background:linear-gradient(135deg,rgba(217,79,106,.08),rgba(192,132,160,.06));
-  border:1px solid rgba(217,79,106,.2);
-  border-radius:6px;padding:24px 20px;
-  position:relative;overflow:hidden;
+.crimes-title {
+  font-family:'Space Mono',monospace; font-size:var(--t-xs); letter-spacing:3px;
+  color:var(--warn); text-transform:uppercase; margin-bottom:var(--s3);
 }
-.tbd-banner::before {
-  content:'NYC';
-  position:absolute;right:16px;bottom:-10px;
-  font-family:'Playfair Display',serif;
-  font-size:90px;font-weight:700;
-  color:rgba(217,79,106,.05);pointer-events:none;
+.crimes-list { display:flex; flex-wrap:wrap; gap:var(--s2); }
+.crime {
+  font-size:11.5px; padding:5px 10px; border-radius:var(--r-pill);
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07);
+  color:var(--muted);
 }
-.tbd-title {
-  font-family:'Playfair Display',serif;
-  font-size:28px;font-weight:700;color:var(--text);
-  margin-bottom:6px;
-}
-.tbd-sub {
-  font-family:'Space Mono',monospace;
-  font-size:9px;letter-spacing:3px;color:var(--red);
-  margin-bottom:20px;
-}
-.tbd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.tbd-card {
-  background:rgba(255,255,255,.03);
-  border:1px dashed rgba(200,120,150,.2);
-  border-radius:4px;padding:14px 14px;
-  display:flex;flex-direction:column;gap:6px;
-}
-.tbd-card-name{font-size:13px;font-weight:500;color:var(--mauve-lt);}
-.tbd-card-cat {
-  font-family:'Space Mono',monospace;
-  font-size:8px;color:var(--muted);letter-spacing:1px;
-}
-.tbd-placeholder {
-  border-style:dashed;border-color:rgba(200,120,150,.12);
-  background:transparent;
-  display:flex;align-items:center;justify-content:center;
-  min-height:60px;
-}
-.tbd-placeholder-txt{font-family:'Space Mono',monospace;font-size:9px;color:rgba(200,120,150,.3);letter-spacing:2px;}
+.crime b { color:var(--text); font-weight:500; }
 
-/* ── FOOTER ── */
-.footer {
-  text-align:center;padding:28px 20px calc(28px + env(safe-area-inset-bottom));
-  border-top:1px solid var(--border);
-}
-.footer-main{
-  font-family:'Playfair Display',serif;
-  font-style:italic;font-size:14px;color:var(--mauve);
-}
-.footer-sub{
-  font-family:'Space Mono',monospace;
-  font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:6px;
-}
-.footer-hearts{font-size:16px;margin-top:8px;}
+/* ── legend ── */
+.legend { max-width:1100px; margin:0 auto; padding:0 var(--s5) var(--s10); display:flex; flex-wrap:wrap; gap:var(--s4); }
+.legend-item { display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:var(--t-xs); color:var(--muted); letter-spacing:.5px; }
+.legend-dot { width:9px; height:9px; border-radius:2px; }
 
-/* hidden */
-.card.hidden,.todo-card.hidden{display:none;}
-.section.hidden{display:none;}
+/* ── footer ── */
+.footer { text-align:center; padding:var(--s8) var(--s5) calc(var(--s8) + env(safe-area-inset-bottom)); border-top:1px solid var(--border); }
+.footer-main { font-family:'Playfair Display',serif; font-style:italic; font-size:var(--t-lg); color:var(--accent-lt); }
+.footer-sub { font-family:'Space Mono',monospace; font-size:var(--t-xs); color:var(--muted); letter-spacing:2px; margin-top:6px; }
+.footer-mark { font-size:var(--t-lg); margin-top:var(--s2); color:var(--second); }
+.footer-mark::before { content:var(--star); }
 
-/* ── Password Gate ── */
+.hidden { display:none !important; }
+.empty-msg { font-family:'Space Mono',monospace; font-size:var(--t-sm); color:var(--muted); letter-spacing:1px; padding:var(--s10) 0; text-align:center; }
+
+@media (prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PASSWORD GATE
+   ═══════════════════════════════════════════════════════════ */
 #pw-gate {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,0.88); backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity .4s;
+  position:fixed; inset:0; z-index:9999;
+  background:rgba(3,5,10,.94); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center; transition:opacity .4s;
 }
 #pw-card {
-  background: #fff; border-radius: 16px; padding: 2.5rem 2rem;
-  max-width: 360px; width: 90%; text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  background:var(--surface); border:1px solid var(--border-2);
+  border-radius:var(--r-lg); padding:var(--s10) var(--s8);
+  max-width:340px; width:88%; text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
 }
-#pw-card h2 { margin: 0 0 .25rem; font-size: 1.35rem; color: #111; }
-#pw-card p  { margin: 0 0 1.25rem; font-size: .9rem; color: #555; }
+#pw-card h2 { font-family:'Playfair Display',serif; font-size:var(--t-2xl); margin-bottom:var(--s2); color:var(--text); }
+#pw-card p { font-family:'Space Mono',monospace; font-size:var(--t-xs); letter-spacing:2px; color:var(--muted); margin-bottom:var(--s6); text-transform:uppercase; }
 #pw-input {
-  width: 100%; padding: .65rem 1rem; border: 2px solid #e2e8f0;
-  border-radius: 8px; font-size: 1rem; text-align: center;
-  letter-spacing: .15em; outline: none; box-sizing: border-box;
-  transition: border-color .2s;
+  width:100%; padding:12px var(--s4); background:var(--bg);
+  border:1px solid var(--border); border-radius:var(--r-md);
+  font-size:16px; text-align:center; letter-spacing:.2em; color:var(--text);
+  outline:none; transition:border-color .2s;
 }
-#pw-input:focus { border-color: #c084a0; }
+#pw-input:focus { border-color:var(--accent); }
 #pw-btn {
-  margin-top: .85rem; width: 100%; padding: .7rem;
-  background: #c084a0; color: #fff; border: none;
-  border-radius: 8px; font-size: 1rem; font-weight: 600;
-  cursor: pointer; transition: opacity .2s;
+  margin-top:var(--s3); width:100%; padding:12px; min-height:46px;
+  background:var(--accent); color:var(--bg); border:none; border-radius:var(--r-md);
+  font-family:'Space Mono',monospace; font-size:var(--t-sm); font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:opacity .2s;
 }
-#pw-btn:hover { opacity: .88; }
-#pw-error { margin-top: .6rem; font-size: .82rem; color: #e53e3e; min-height: 1.2em; }
-@keyframes shake {
-  0%,100%{transform:translateX(0)}
-  20%,60%{transform:translateX(-6px)}
-  40%,80%{transform:translateX(6px)}
-}
-.shake { animation: shake .35s ease; }
+#pw-btn:hover { opacity:.85; }
+#pw-error { margin-top:var(--s3); font-family:'Space Mono',monospace; font-size:var(--t-xs); color:var(--second); min-height:1.2em; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+.shake { animation:shake .35s ease; }
 </style>
 </head>
 <body>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-lines"></div>
-  <div class="hero-eyebrow">★ our places ★</div>
-  <div class="hero-title">DSN</div>
-  <div class="hero-subtitle">Places & Vibes</div>
-  <div class="hero-names"><span>Sneha</span> &amp; <span>Daivik</span></div>
-  <div class="hero-divider"></div>
+<div id="pw-gate">
+  <div id="pw-card">
+    <h2>DSN</h2>
+    <p>private</p>
+    <input id="pw-input" type="password" placeholder="password" aria-label="Password" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button id="pw-btn" onclick="checkPassword()">Unlock</button>
+    <div id="pw-error" role="alert"></div>
+  </div>
 </div>
 
-<!-- STICKY CONTROLS -->
+<!-- ══ HERO ══ -->
+<header class="hero">
+  <div class="hero-fx"></div>
+  <div class="hero-inner">
+
+    <div class="city-switch" role="group" aria-label="Choose city">
+      <button class="city-btn" id="btn-nyc" aria-pressed="true"  onclick="setCity('nyc')">New York</button>
+      <button class="city-btn" id="btn-chi" aria-pressed="false" onclick="setCity('chi')">Chicago</button>
+    </div>
+
+    <div class="hero-eyebrow" id="heroEyebrow">★ our places ★</div>
+    <h1 class="hero-title" id="heroTitle">NEW YORK</h1>
+    <div class="hero-sub" id="heroSub">Places &amp; Vibes</div>
+    <div class="hero-names"><b>Sneha</b> &amp; <b>Daivik</b></div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="skyline" aria-hidden="true">
+    <!-- NEW YORK -->
+    <svg class="sky-nyc" viewBox="0 0 1200 150" preserveAspectRatio="none">
+      <path d="M0,150 L0,118 L38,118 L38,96 L74,96 L74,120 L108,120 L108,72 L118,72 L118,40 L124,40 L124,6 L127,6 L127,40 L133,40 L133,72 L143,72 L143,120 L188,120 L188,92 L226,92 L226,128 L262,128 L262,84 L292,84 L292,54 L300,54 L300,18 L303,18 L303,54 L311,54 L311,84 L338,84 L338,124 L392,124 L392,102 L430,102 L430,74 L462,74 L462,112 L512,112 L512,88 L552,88 L552,128 L594,128 L594,58 L614,58 L614,32 L620,32 L620,2 L623,2 L623,32 L630,32 L630,58 L650,58 L650,128 L698,128 L698,98 L736,98 L736,118 L778,118 L778,78 L808,78 L808,108 L856,108 L856,88 L896,88 L896,124 L936,124 L936,66 L956,66 L956,42 L961,42 L961,10 L964,10 L964,42 L982,42 L982,124 L1028,124 L1028,98 L1066,98 L1066,114 L1106,114 L1106,92 L1148,92 L1148,120 L1200,120 L1200,150 Z"/>
+    </svg>
+    <!-- CHICAGO -->
+    <svg class="sky-chi" viewBox="0 0 1200 150" preserveAspectRatio="none">
+      <path d="M0,150 L0,122 L42,122 L42,100 L80,100 L80,126 L118,126 L118,74 L140,74 L140,48 L145,48 L145,8 L148,8 L148,48 L154,48 L154,8 L157,8 L157,48 L163,48 L163,74 L184,74 L184,126 L228,126 L228,96 L268,96 L268,118 L308,118 L308,62 L330,62 L330,34 L336,34 L336,4 L339,4 L339,34 L348,34 L348,62 L366,62 L366,118 L412,118 L412,90 L452,90 L452,124 L496,124 L496,80 L524,80 L524,56 L530,56 L530,22 L533,22 L533,56 L541,56 L541,80 L562,80 L562,124 L610,124 L610,98 L648,98 L648,116 L692,116 L692,70 L718,70 L718,44 L723,44 L723,14 L726,14 L726,44 L734,44 L734,70 L752,70 L752,116 L800,116 L800,92 L842,92 L842,122 L884,122 L884,76 L916,76 L916,102 L960,102 L960,86 L1000,86 L1000,124 L1044,124 L1044,96 L1084,96 L1084,112 L1126,112 L1126,90 L1164,90 L1164,120 L1200,120 L1200,150 Z"/>
+    </svg>
+  </div>
+</header>
+
+<!-- ══ CONTROLS ══ -->
 <div class="sticky-top">
-  <input class="search-input" type="text" id="searchInput" placeholder="🔍 Search places..." oninput="filterAll()" autocomplete="off" autocorrect="off" spellcheck="false">
-  <div class="filters">
-    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-    <button class="filter-btn" onclick="setFilter('vibes',this)">✨ Vibes</button>
-    <button class="filter-btn" onclick="setFilter('food',this)">🍽 Food</button>
-    <button class="filter-btn" onclick="setFilter('drinks',this)">🍷 Drinks</button>
-    <button class="filter-btn" onclick="setFilter('dessert',this)">🍰 Dessert</button>
-    <button class="filter-btn" onclick="setFilter('todo',this)">📍 To Do</button>
-    <button class="filter-btn" onclick="setFilter('top',this)">🔥 9+</button>
+  <div class="controls-row">
+    <input class="search-input" type="text" id="searchInput" placeholder="Search places…" oninput="render()" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search places">
+    <button class="sort-btn" id="sortBtn" onclick="toggleSort()">↓ Rating</button>
+  </div>
+  <div class="filters" role="group" aria-label="Filter by category">
+    <button class="filter-btn" aria-pressed="true"  data-f="all"     onclick="setFilter(this)">All</button>
+    <button class="filter-btn" aria-pressed="false" data-f="goback"  onclick="setFilter(this)">↩ Go Back 8+</button>
+    <button class="filter-btn" aria-pressed="false" data-f="elite"   onclick="setFilter(this)">🔥 9+</button>
+    <button class="filter-btn" aria-pressed="false" data-f="food"    onclick="setFilter(this)">🍽 Food</button>
+    <button class="filter-btn" aria-pressed="false" data-f="drinks"  onclick="setFilter(this)">🍷 Drinks</button>
+    <button class="filter-btn" aria-pressed="false" data-f="dessert" onclick="setFilter(this)">🍰 Dessert</button>
+    <button class="filter-btn" aria-pressed="false" data-f="vibes"   onclick="setFilter(this)">✨ Vibes</button>
+    <button class="filter-btn" aria-pressed="false" data-f="todo"    onclick="setFilter(this)">📍 To Do</button>
   </div>
 </div>
 
-<!-- CITY HEADER -->
-<div class="city-header">
-  <div class="city-label">Chicago</div>
-  <div class="city-tag">S + D</div>
+<!-- ══ GO-BACK RAIL ══ -->
+<div class="rail-wrap" id="railWrap">
+  <div class="rail-head">
+    <div class="rail-title">Worth Going Back</div>
+    <div class="rail-note" id="railNote">8+ ONLY</div>
+  </div>
+  <div class="rail" id="rail"></div>
 </div>
 
-<!-- SECTIONS -->
-<div class="sections" id="mainSections">
+<!-- ══ SECTIONS ══ -->
+<main class="sections" id="sections"></main>
 
-  <!-- VIBES -->
-  <div class="section" data-cat="vibes">
-    <div class="section-header">
-      <span class="section-emoji">✨</span>
-      <div class="section-title">Vibes</div>
-    </div>
-    <div class="card-grid" id="grid-vibes"></div>
-  </div>
+<!-- ══ THE CRIMES ══ -->
+<div class="crimes" id="crimes"></div>
 
-  <!-- FOOD -->
-  <div class="section" data-cat="food">
-    <div class="section-header">
-      <span class="section-emoji">🍽</span>
-      <div class="section-title">Food</div>
-    </div>
-    <div class="card-grid" id="grid-food"></div>
-  </div>
-
-  <!-- DRINKS -->
-  <div class="section" data-cat="drinks">
-    <div class="section-header">
-      <span class="section-emoji">🍷</span>
-      <div class="section-title">Drinks</div>
-    </div>
-    <div class="card-grid" id="grid-drinks"></div>
-  </div>
-
-  <!-- DESSERT -->
-  <div class="section" data-cat="dessert">
-    <div class="section-header">
-      <span class="section-emoji">🍰</span>
-      <div class="section-title">Dessert</div>
-    </div>
-    <div class="card-grid" id="grid-dessert"></div>
-  </div>
-
-  <!-- THINGS TO DO -->
-  <div class="section" data-cat="todo">
-    <div class="section-header">
-      <span class="section-emoji">📍</span>
-      <div class="section-title">Things To Do</div>
-    </div>
-    <div class="todo-grid" id="grid-todo"></div>
-  </div>
-
+<!-- ══ LEGEND ══ -->
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:var(--rt-elite)"></span>10+ hall of fame</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--rt-9)"></span>9s</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--rt-8)"></span>8s · go back</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--rt-7)"></span>7s</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--rt-low)"></span>the crimes</div>
+  <div class="legend-item"><span class="badge b-repeat">2×</span> been twice</div>
 </div>
 
-<!-- NYC TBD -->
-<div class="tbd-section">
-  <div class="tbd-banner">
-    <div class="tbd-title">New York City</div>
-    <div class="tbd-sub">★ LIST TBD ★</div>
-    <div class="tbd-grid" id="tbd-grid"></div>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
+<!-- ══ FOOTER ══ -->
+<footer class="footer">
   <div class="footer-main">our memories, our places</div>
-  <div class="footer-sub">DSN · Sneha & Daivik</div>
-  <div class="footer-hearts">🌹</div>
-</div>
+  <div class="footer-sub">DSN · SNEHA &amp; DAIVIK</div>
+  <div class="footer-mark"></div>
+</footer>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════════ */
+const DATA = {
 
-const vibes = [
-  { name:"Le Piano — drinks & vibe", rating:10, note:"🎹", special:true },
-  { name:"Bulls Game", rating:10, special:true },
-  { name:"The Bean", rating:3, note:"lol" },
-  { name:"Walking Michigan Ave", rating:6 },
-  { name:"Best View in the City (Adler)", rating:7 },
-  { name:"Lincoln Park View", rating:8 },
-  { name:"Shedd Aquarium 🐟", rating:10, note:"S+D 10.25.25", special:true },
-  { name:"Christkindel Market", rating:5 },
-  { name:"Jewel Osco", rating:10, special:true },
-  { name:"Pendry Chicago — FHR #Amex", rating:10, special:true },
-  { name:"St Patrick's Wrigley Crawl 🍀", rating:null },
+  nyc: {
+    label:"NEW YORK", eyebrow:"★ the live list ★", sub:"Places & Vibes",
+    vibes: [
+      { name:"BBQ 🍖", rating:10, special:true },
+      { name:"Centurion Lounge ⭐️", rating:9, note:"amex", special:true },
+      { name:"Daintree LES Rooftop", rating:7 },
+      { name:"CloudM Rooftop Bar", rating:6 },
+      { name:"Vintage Vanguard 🎷", rating:0, note:"unique — still needs seasoning" },
+    ],
+    food: [
+      { name:"Taco Bell", rating:12, note:"sn was high asl", special:true },
+      { name:"Ambassadors Clubhouse ⭐️", rating:10, special:true },
+      { name:"Bangalore Kitchen 🍛", rating:9, visits:2 },
+      { name:"The Ainsworth 🍗", rating:8.9, note:"hoboken" },
+      { name:"Balaboosta", rating:8.8 },
+      { name:"Golconda", rating:8.5 },
+      { name:"King Falafel", rating:8.5 },
+      { name:"Jack's Wife Freda", rating:8.5 },
+      { name:"L'Industrie Pizza 🍕", rating:8 },
+      { name:"CAVA", rating:7.5 },
+      { name:"Parata Junction", rating:7.5 },
+      { name:"Rubirosa", rating:7 },
+      { name:"Fire & Oak", rating:7 },
+      { name:"Nino's 46", rating:7 },
+      { name:"Bikanervala", rating:6.5 },
+      { name:"Honest JSQ", rating:6.5 },
+      { name:"Seppe", rating:6.5 },
+      { name:"Mughlai Indian", rating:6 },
+      { name:"Park Rosa", rating:6 },
+      { name:"Panda Express", rating:5 },
+      { name:"Los Cuernos", rating:4.1 },
+      { name:"Tacoria", rating:3 },
+    ],
+    drinks: [
+      { name:"Spring Lounge", rating:10, note:"fought for a nic here omg", special:true },
+      { name:"Electric Shuffle", rating:9.5, note:"happy hr", special:true },
+      { name:"Manta", rating:8.5 },
+      { name:"Balazem", rating:8, note:"D's rating" },
+      { name:"Blank Street", rating:8, visits:2 },
+      { name:"Mixue", rating:5 },
+    ],
+    dessert: [
+      { name:"Salt & Straw", rating:9 },
+      { name:"Torico Ice Cream", rating:9, visits:2 },
+      { name:"Venchi", rating:9, visits:2 },
+      { name:"Sundaes Best", rating:8.5 },
+      { name:"Van Leeuwen", rating:2 },
+    ],
+    todo: [
+      { name:"Brooklyn Flea Market 🛍", next:true },
+      { name:"See a Musical 🎭", next:true },
+      { name:"Farmers Market 🥬", next:true },
+      { name:"Broad Nosh Bagels & Deli 🥯", next:true, note:"biscoff cream cheese" },
+      { name:"Punjab Meet House 🍛", next:true, note:"jersey city" },
+      { name:"Batsu! 🎌", next:true },
+      { name:"Watch a Knicks Game 🏀" },
+      { name:"ZA w the ZA ifykyk 🍕" },
+      { name:"SUMMIT One Vanderbilt 🔭", note:"views + art installs" },
+      { name:"Stroll the High Line at Dusk 🌆" },
+      { name:"Walk the Brooklyn Bridge 🌉" },
+      { name:"DUMBO at Golden Hour 📸" },
+      { name:"Row Boats in Central Park 🚣" },
+      { name:"Sunset Sail on the Hudson 🌅" },
+      { name:"Chelsea Market Food Tour 🥐" },
+      { name:"Rooftop Bar Hopping in Midtown 🍸" },
+      { name:"Governor's Island Bike Ride 🚴" },
+      { name:"Brooklyn Botanic Garden 🌸", note:"cherry blossom season" },
+      { name:"The Campbell Bar @ Grand Central 🍸" },
+      { name:"Ghost Tour of Lower Manhattan 👻" },
+      { name:"Coney Island Summer Day 🎡" },
+      { name:"Ice Skating @ Rockefeller ⛸", note:"winter only" },
+      { name:"Roosevelt Island Tram Ride 🚡" },
+      { name:"Chocolate Tasting @ Tache 🍫" },
+      { name:"Flamenco Show @ Socarrat 💃", note:"free tuesdays 6:30pm" },
+      { name:"Pani Puri Eating Contest 🌶", any:true, note:"who wins?" },
+      { name:"Pottery Painting 🏺", any:true },
+      { name:"Live Music After Dinner 🎶", any:true },
+      { name:"Picnic in the Park 🧺", any:true },
+      { name:"Couples Cooking Class 🧑‍🍳", any:true, note:"pasta or sushi" },
+      { name:"Paint & Sip Night 🎨", any:true },
+    ],
+  },
+
+  chi: {
+    label:"CHICAGO", eyebrow:"✶ where it started ✶", sub:"The Archive",
+    vibes: [
+      { name:"Le Piano 🎹", rating:10, note:"drinks & vibe", special:true },
+      { name:"Bulls Game 🏀", rating:10, special:true },
+      { name:"Shedd Aquarium 🐟", rating:10, note:"S+D 10.25.25", special:true },
+      { name:"Jewel Osco", rating:10, special:true },
+      { name:"Pendry Chicago", rating:10, note:"FHR #amex", special:true },
+      { name:"Lincoln Park View", rating:8 },
+      { name:"Best View in the City", rating:7, note:"adler" },
+      { name:"Walking Michigan Ave", rating:6 },
+      { name:"Christkindl Market", rating:5 },
+      { name:"The Bean", rating:3, note:"lol" },
+      { name:"St Patrick's Wrigley Crawl 🍀", rating:null },
+    ],
+    food: [
+      { name:"Los Comales Taqueria", rating:9.9, special:true },
+      { name:"Trivoli Tavern 🥮", rating:9.9, special:true },
+      { name:"Lil Baba Reeba", rating:9 },
+      { name:"Summer House Santa Monica", rating:9 },
+      { name:"Wildberry 🐝", rating:9 },
+      { name:"Gilt Bar 🍷", rating:9 },
+      { name:"Gibsons Italia", rating:8.9 },
+      { name:"SALT 🍔", rating:8.9 },
+      { name:"Yasemi", rating:8.6 },
+      { name:"Sifr", rating:8.2 },
+      { name:"Blue Sushi Sake", rating:8 },
+      { name:"Cafe Baba Reeba", rating:8 },
+      { name:"Gung Ho Ramen 🍜", rating:7.6 },
+      { name:"Aba", rating:7.4 },
+      { name:"Gyu Kaku", rating:7 },
+      { name:"Cava", rating:7 },
+      { name:"Gino's East", rating:7 },
+      { name:"Lou Malnati's", rating:7 },
+      { name:"Prince", rating:7 },
+      { name:"LIA Tavern", rating:7 },
+      { name:"Honest", rating:7 },
+      { name:"Dough Bros", rating:7, note:"dine & dash 😅" },
+      { name:"Ema", rating:6.5 },
+      { name:"Oiistar Ramen 🍜", rating:6.5 },
+      { name:"Pizzeria Portofino", rating:6.4 },
+      { name:"Alpana", rating:6 },
+      { name:"Ventuex", rating:6 },
+      { name:"Velvet Taco", rating:5.5 },
+      { name:"Quarntino", rating:5.5 },
+      { name:"Busy Burger 🍔", rating:5 },
+      { name:"Chowresta", rating:5 },
+      { name:"Pendry Room Service 🥜", rating:5 },
+      { name:"Buffalo Wild Wings 🦬", rating:4 },
+      { name:"PBNJ", rating:4 },
+      { name:"Habibi Mediterranean", rating:4 },
+      { name:"Costera Tulum", rating:2 },
+      { name:"Sunda", rating:1 },
+    ],
+    drinks: [
+      { name:"Tetto", rating:11, note:"🔥", special:true },
+      { name:"Estero FM", rating:10, note:"SN rated", special:true },
+      { name:"Nisos Prime Lounge", rating:8 },
+      { name:"Grapes & Grains 🎹", rating:8 },
+      { name:"The Pearl", rating:8 },
+      { name:"Broken Shaker", rating:8 },
+      { name:"Kitchen and Kocktails", rating:7 },
+      { name:"Texan Taco Bar", rating:6, note:"happy hr" },
+      { name:"Hiezmans", rating:6 },
+      { name:"Pendry Bar", rating:5.5 },
+      { name:"Sixty Four Winery", rating:4.5 },
+      { name:"Draft Picks", rating:null },
+      { name:"She-naggin", rating:null },
+      { name:"Cruz Blanca", rating:null },
+      { name:"Old Crow", rating:null },
+      { name:"Sluggers", rating:null },
+      { name:"Federalas", rating:null },
+    ],
+    dessert: [
+      { name:"Sticky Date Cake @ Trivoli 🥮", rating:null, special:true },
+      { name:"Cookie Skillet @ Gilt Bar", rating:null, special:true },
+      { name:"Andy's Frozen Custard", rating:null },
+      { name:"Jeni's Ice Cream", rating:null },
+      { name:"Kilwins", rating:null },
+      { name:"Kilwins Evanston", rating:null },
+      { name:"Insomnia Cookies 🍪", rating:null },
+    ],
+    todo: [
+      { name:"Pani Puri Eating Contest 🌶", any:true, note:"who wins?" },
+      { name:"Pottery Painting 🏺", any:true },
+      { name:"Live Music After Dinner 🎶", any:true },
+      { name:"Picnic in the Park 🧺", any:true },
+      { name:"Couples Cooking Class 🧑‍🍳", any:true, note:"pasta or sushi" },
+      { name:"Paint & Sip Night 🎨", any:true },
+    ],
+  }
+};
+
+const CATS = [
+  { key:"food",    emoji:"🍽", title:"Food" },
+  { key:"drinks",  emoji:"🍷", title:"Drinks" },
+  { key:"dessert", emoji:"🍰", title:"Dessert" },
+  { key:"vibes",   emoji:"✨", title:"Vibes" },
 ];
 
-const food = [
-  { name:"Gyu Kaku", rating:7 },
-  { name:"Los Comales Taqueria", rating:9.9, special:true },
-  { name:"Cava", rating:7 },
-  { name:"Ema", rating:6.5 },
-  { name:"Aba", rating:7.4 },
-  { name:"Gibsons Italia", rating:8.9 },
-  { name:"Busy Burger 🍔", rating:5 },
-  { name:"Velvet Taco", rating:5.5 },
-  { name:"Lil Baba Reeba", rating:9 },
-  { name:"Cafe Baba Reeba", rating:8 },
-  { name:"Sunda", rating:1 },
-  { name:"Santa Monica's Summer House", rating:9 },
-  { name:"Dough Bros", rating:7, note:"dine & dash 😅" },
-  { name:"PBNJ", rating:4 },
-  { name:"Wildberry 🐝", rating:9 },
-  { name:"Prince", rating:7 },
-  { name:"Oiistar Ramen 🍜", rating:6.5 },
-  { name:"Gino's East", rating:7 },
-  { name:"Blue Sushi Sake", rating:8 },
-  { name:"Trivoli Tavern 🥮", rating:9.9, special:true },
-  { name:"Lou Malnati's", rating:7 },
-  { name:"Costera Tulum", rating:2 },
-  { name:"Gung Ho Ramen 🍜", rating:7.6 },
-  { name:"LIA Tavern", rating:7 },
-  { name:"Buffalo Wild Wings 🦬", rating:4 },
-  { name:"Alpana", rating:6 },
-  { name:"Gilt Bar 🍷", rating:9 },
-  { name:"Ventuex", rating:6 },
-  { name:"Pizzeria Portofino", rating:6.4 },
-  { name:"Pendry Room Service 🥜", rating:5 },
-  { name:"Sifr", rating:8.2 },
-  { name:"SALT 🍔", rating:8.9 },
-  { name:"Honest", rating:7 },
-  { name:"Chowresta", rating:5 },
-  { name:"Quarntino", rating:5.5 },
-  { name:"Yasemi", rating:8.6 },
-  { name:"Habibi Mediterranean Grill", rating:4 },
-];
+const GO_BACK = 8;   // "anything higher than an 8 is worth going back"
 
-const drinks = [
-  { name:"Nisos Prime Lounge", rating:8 },
-  { name:"Tetto", rating:11, note:"🔥", special:true },
-  { name:"Estero FM", rating:10, note:"SN rated", special:true },
-  { name:"Texan Taco Bar", rating:6, note:"happy hr" },
-  { name:"Grapes & Grains 🎹", rating:8 },
-  { name:"The Pearl", rating:8 },
-  { name:"Sixty Four Winery", rating:4.5 },
-  { name:"Kitchen and Kocktails", rating:7 },
-  { name:"Pendry Bar", rating:5.5 },
-  { name:"Draft Picks", rating:null },
-  { name:"Hiezmans", rating:6 },
-  { name:"She-naggin", rating:null },
-  { name:"Cruz Blanca", rating:null },
-  { name:"Broken Shaker", rating:8 },
-  { name:"Old Crow", rating:null },
-  { name:"Sluggers", rating:null },
-  { name:"Federalas", rating:null },
-];
+/* ═══════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════ */
+let city   = 'nyc';
+let filter = 'all';
+let sortBy = 'rating';   // 'rating' | 'name'
 
-const dessert = [
-  { name:"Andy's Frozen Custard", rating:null },
-  { name:"Jeni's Ice Cream", rating:null },
-  { name:"Kilwins", rating:null },
-  { name:"Sticky Date Cake @ Trivoli 🥮", rating:null, special:true },
-  { name:"Cookie Skillet @ Gilt Bar", rating:null, special:true },
-  { name:"Kilwins Evanston", rating:null },
-  { name:"Insomnia Cookies 🍪", rating:null },
-];
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════ */
+const has = r => Number.isFinite(r);
 
-const todos = [
-  // Chicago originals
-  { name:"Pani Puri Eating Contest 🌶", cat:"both", note:"who wins?" },
-  { name:"Pottery Painting 🏺", cat:"both" },
-  { name:"Live Music After Dinner 🎶", cat:"both" },
-  { name:"Picnic in the Park 🧺", cat:"both" },
-  { name:"Watch a Knicks Game 🏀", cat:"nyc", note:"NYC only" },
-  { name:"Bagel Crawl in NYC 🥯", cat:"nyc", note:"the real deal" },
-  { name:"ZA w the ZA ifykyk 🍕", cat:"nyc" },
-  // NYC additions
-  { name:"Stroll the High Line at Dusk 🌆", cat:"nyc", note:"elevated park, best views" },
-  { name:"SUMMIT One Vanderbilt 🔭", cat:"nyc", note:"best views + art installs" },
-  { name:"Walk the Brooklyn Bridge 🌉", cat:"nyc", note:"free & iconic" },
-  { name:"DUMBO at Golden Hour 📸", cat:"nyc", note:"best skyline backdrop" },
-  { name:"Row Boats in Central Park 🚣", cat:"nyc", note:"Central Park Boathouse" },
-  { name:"Couples Cooking Class 🧑‍🍳", cat:"both", note:"pasta or sushi" },
-  { name:"Sunset Sail on the Hudson 🌅", cat:"nyc", note:"skyline reflection" },
-  { name:"Chelsea Market Food Tour 🥐", cat:"nyc", note:"foodie heaven" },
-  { name:"Rooftop bar hopping in Midtown 🍸", cat:"nyc" },
-  { name:"Governor's Island Bike Ride 🚴", cat:"nyc", note:"Statue of Liberty views" },
-  { name:"Brooklyn Botanic Garden 🌸", cat:"nyc", note:"esp. cherry blossom season" },
-  { name:"Paint & Sip Night 🎨", cat:"both", note:"wine + masterpiece" },
-  { name:"Ghost Tour of Lower Manhattan 👻", cat:"nyc", note:"spooky date night" },
-  { name:"The Campbell Bar @ Grand Central 🍸", cat:"nyc", note:"hidden gem, old-school glam" },
-  { name:"Coney Island Summer Day 🎡", cat:"nyc", note:"carnival + beach" },
-  { name:"Ice Skating @ Rockefeller Center ⛸", cat:"nyc", note:"winter only" },
-  { name:"Roosevelt Island Tram Ride 🚡", cat:"nyc", note:"sky-ride secret gem" },
-  { name:"Chocolate Tasting Class @ Tache 🍫", cat:"nyc", note:"Lower East Side" },
-  { name:"Flamenco Show @ Socarrat 💃", cat:"nyc", note:"free Tuesdays 6:30pm" },
-];
-
-const nycTBD = [
-  { name:"Restaurant TBD", cat:"Food" },
-  { name:"Rooftop Bar TBD", cat:"Drinks" },
-  { name:"Hotel TBD", cat:"Stay" },
-  { name:"Vibe Spot TBD", cat:"Vibes" },
-  { name:"Dessert Spot TBD", cat:"Dessert" },
-  { name:"Hidden Gem TBD", cat:"Discovery" },
-];
-
-// ── HELPERS ────────────────────────────────────────────────────────────────
-function ratingClass(r) {
-  if (r === null || r === undefined) return 'no-r';
-  if (r >= 10) return 'r10';
-  if (r >= 9)  return 'r9';
-  if (r >= 8)  return 'r8';
-  if (r >= 7)  return 'r7';
-  if (r >= 6)  return 'r6';
-  if (r >= 5)  return 'r5';
+function tierClass(r) {
+  if (!has(r))  return 'r-none';
+  if (r >= 10)  return 'r-elite';
+  if (r >= 9)   return 'r9';
+  if (r >= 8)   return 'r8';
+  if (r >= 7)   return 'r7';
+  if (r >= 6)   return 'r6';
+  if (r >= 5)   return 'r5';
   return 'r-low';
 }
 
-function makeCard(item, cat) {
-  const rc = ratingClass(item.rating);
-  const pct = item.rating ? Math.min(100, Math.round((item.rating/10)*100)) : 0;
-  const hasRating = item.rating !== null && item.rating !== undefined;
-  const ratingDisplay = item.rating === 11 ? '11/10 🔥' : (hasRating ? `${item.rating}/10` : '—');
-  const specialBadge = item.special ? '<span class="card-badge badge-special">✦ fave</span>' : '';
-  return `<div class="card ${rc}" data-cat="${cat}" data-name="${item.name.toLowerCase()}" data-rating="${item.rating||0}">
-    <div class="card-name">${item.name}</div>
-    <div class="card-bottom">
-      <div class="card-rating">${ratingDisplay}</div>
-      ${hasRating ? `<div class="card-bar"><div class="card-fill" style="width:${pct}%"></div></div>` : ''}
-      ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
-      ${specialBadge}
-    </div>
-  </div>`;
+function scoreText(r) {
+  if (!has(r)) return '—';
+  if (r > 10)  return r + '/10 🔥';
+  return r + '/10';
 }
 
-function makeTodo(item, i) {
-  const tagClass = item.cat === 'nyc' ? 'tag-nyc' : item.cat === 'both' ? 'tag-both' : 'tag-chi';
-  const tagLabel = item.cat === 'nyc' ? 'NYC' : item.cat === 'both' ? 'ANY' : 'CHI';
-  const nycClass = item.cat === 'nyc' ? 'nyc-only' : '';
-  const noteHtml = item.note ? `<span class="card-note">${item.note}</span>` : '';
-  return `<div class="todo-card ${nycClass}" data-cat="todo" data-name="${item.name.toLowerCase()}">
-    <div class="todo-num">${String(i+1).padStart(2,'0')}</div>
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function allPlaces(c) {
+  return CATS.flatMap(cat => (DATA[c][cat.key] || []).map(p => ({...p, cat:cat.key, emoji:cat.emoji})));
+}
+
+function matchesSearch(name, note) {
+  const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  if (!q) return true;
+  return (name + ' ' + (note || '')).toLowerCase().includes(q);
+}
+
+function sortPlaces(list) {
+  const arr = [...list];
+  if (sortBy === 'name') return arr.sort((a,b) => a.name.localeCompare(b.name));
+  return arr.sort((a,b) => {
+    const ra = has(a.rating) ? a.rating : -1;
+    const rb = has(b.rating) ? b.rating : -1;
+    return rb - ra || a.name.localeCompare(b.name);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMPLATES
+   ═══════════════════════════════════════════════════════════ */
+function cardHTML(p) {
+  const tier    = tierClass(p.rating);
+  const goBack  = has(p.rating) && p.rating >= GO_BACK;
+  const pct     = has(p.rating) ? Math.min(100, Math.round((p.rating / 10) * 100)) : 0;
+  const badges  = [
+    p.special ? '<span class="badge b-fave">✦ fave</span>' : '',
+    goBack    ? '<span class="badge b-goback">↩ go back</span>' : '',
+    p.visits > 1 ? `<span class="badge b-repeat">${p.visits}×</span>` : '',
+  ].join('');
+
+  return `<article class="card ${tier} ${goBack ? 'go-back' : ''}">
+    <div class="card-name">${esc(p.name)}</div>
+    ${p.note ? `<div class="card-note">${esc(p.note)}</div>` : ''}
+    <div class="card-meta">
+      <span class="card-score">${scoreText(p.rating)}</span>
+      ${has(p.rating) ? `<span class="card-bar"><span class="card-fill" style="width:${pct}%"></span></span>` : ''}
+    </div>
+    ${badges ? `<div class="badges">${badges}</div>` : ''}
+  </article>`;
+}
+
+function todoHTML(t, i) {
+  const tag = t.next ? ['tag-next','up next'] : t.any ? ['tag-any','any city'] : ['tag-city', city === 'nyc' ? 'nyc' : 'chi'];
+  return `<div class="todo-card ${t.next ? 'up-next' : ''}">
+    <span class="todo-num">${String(i+1).padStart(2,'0')}</span>
     <div style="flex:1">
-      <div class="todo-text">${item.name}</div>
-      ${noteHtml}
+      <div class="todo-text">${esc(t.name)}</div>
+      ${t.note ? `<div class="card-note">${esc(t.note)}</div>` : ''}
     </div>
-    <span class="todo-tag ${tagClass}">${tagLabel}</span>
+    <span class="todo-tag ${tag[0]}">${tag[1]}</span>
   </div>`;
 }
 
-function makeTBD(item) {
-  if (!item) return `<div class="tbd-card tbd-placeholder"><span class="tbd-placeholder-txt">TBD</span></div>`;
-  return `<div class="tbd-card">
-    <div class="tbd-card-name">${item.name}</div>
-    <div class="tbd-card-cat">${item.cat}</div>
+function railCardHTML(p, i) {
+  return `<div class="rail-card ${tierClass(p.rating)}">
+    <div>
+      <div class="rail-rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="rail-name">${esc(p.name)}</div>
+    </div>
+    <div class="rail-foot">
+      <span class="rail-score">${scoreText(p.rating)}</span>
+      <span class="rail-cat">${p.emoji}</span>
+    </div>
   </div>`;
 }
 
-// ── RENDER ─────────────────────────────────────────────────────────────────
-document.getElementById('grid-vibes').innerHTML   = vibes.map(i=>makeCard(i,'vibes')).join('');
-document.getElementById('grid-food').innerHTML    = food.map(i=>makeCard(i,'food')).join('');
-document.getElementById('grid-drinks').innerHTML  = drinks.map(i=>makeCard(i,'drinks')).join('');
-document.getElementById('grid-dessert').innerHTML = dessert.map(i=>makeCard(i,'dessert')).join('');
-document.getElementById('grid-todo').innerHTML    = todos.map((t,i)=>makeTodo(t,i)).join('');
-document.getElementById('tbd-grid').innerHTML     = nycTBD.map(makeTBD).join('') + makeTBD(null) + makeTBD(null);
+/* ═══════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════ */
+function renderHero() {
+  const d = DATA[city];
+  const t = document.getElementById('heroTitle');
+  const e = document.getElementById('heroEyebrow');
+  const s = document.getElementById('heroSub');
+  [t,e,s].forEach(el => el.classList.remove('fade-swap'));
+  void t.offsetWidth;
+  t.textContent = d.label; e.textContent = d.eyebrow; s.textContent = d.sub;
+  [t,e,s].forEach(el => el.classList.add('fade-swap'));
 
-// ── FILTER ─────────────────────────────────────────────────────────────────
-let activeFilter = 'all';
+  const rated  = allPlaces(city).filter(p => has(p.rating));
+  const avg    = rated.length ? (rated.reduce((a,p) => a + Math.min(p.rating,10), 0) / rated.length).toFixed(1) : '—';
+  const goBack = rated.filter(p => p.rating >= GO_BACK).length;
 
-function setFilter(f, btn) {
-  activeFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  filterAll();
+  document.getElementById('stats').innerHTML = [
+    [allPlaces(city).length, 'places'],
+    [avg,                    'avg score'],
+    [goBack,                 'go back'],
+    [DATA[city].todo.length, 'to do'],
+  ].map(([n,l]) => `<div class="stat"><div class="stat-num">${n}</div><div class="stat-label">${l}</div></div>`).join('');
 }
 
-function filterAll() {
-  const q = (document.getElementById('searchInput').value || '').toLowerCase();
-
-  document.querySelectorAll('.card').forEach(card => {
-    const cat    = card.dataset.cat;
-    const name   = card.dataset.name || '';
-    const rating = parseFloat(card.dataset.rating) || 0;
-    let show = true;
-    if (activeFilter === 'vibes'   && cat !== 'vibes')   show = false;
-    if (activeFilter === 'food'    && cat !== 'food')     show = false;
-    if (activeFilter === 'drinks'  && cat !== 'drinks')   show = false;
-    if (activeFilter === 'dessert' && cat !== 'dessert')  show = false;
-    if (activeFilter === 'todo'    && cat !== 'todo')     show = false;
-    if (activeFilter === 'top'     && rating < 9)         show = false;
-    if (q && !name.includes(q)) show = false;
-    card.classList.toggle('hidden', !show);
-  });
-
-  document.querySelectorAll('.todo-card').forEach(card => {
-    const name = card.dataset.name || '';
-    let show = !['vibes','food','drinks','dessert','top'].includes(activeFilter);
-    if (q && !name.includes(q)) show = false;
-    card.classList.toggle('hidden', !show);
-  });
-
-  // hide empty sections
-  document.querySelectorAll('#mainSections .section').forEach(sec => {
-    const visibleCards = sec.querySelectorAll('.card:not(.hidden), .todo-card:not(.hidden)');
-    sec.classList.toggle('hidden', visibleCards.length === 0);
-  });
+function renderRail() {
+  const top = sortPlaces(allPlaces(city).filter(p => has(p.rating) && p.rating >= GO_BACK));
+  document.getElementById('rail').innerHTML = top.map(railCardHTML).join('');
+  document.getElementById('railNote').textContent = `${top.length} SPOTS · ${GO_BACK}+ ONLY`;
+  document.getElementById('railWrap').classList.toggle('hidden', top.length === 0 || filter === 'todo');
 }
 
-// ── Password Gate ──────────────────────────────
-(function() {
-  if (sessionStorage.getItem('dsn-unlocked') === '1') {
-    document.getElementById('pw-gate').style.display = 'none';
+function renderSections() {
+  const showCat = k => filter === 'all' || filter === 'goback' || filter === 'elite' || filter === k;
+  let html = '';
+
+  CATS.forEach(cat => {
+    if (!showCat(cat.key)) return;
+    let items = (DATA[city][cat.key] || []).filter(p => matchesSearch(p.name, p.note));
+    if (filter === 'goback') items = items.filter(p => has(p.rating) && p.rating >= GO_BACK);
+    if (filter === 'elite')  items = items.filter(p => has(p.rating) && p.rating >= 9);
+    if (!items.length) return;
+    html += `<section class="section">
+      <div class="section-header">
+        <span class="section-emoji">${cat.emoji}</span>
+        <h2 class="section-title">${cat.title}</h2>
+        <span class="section-count">${items.length}</span>
+      </div>
+      <div class="card-grid">${sortPlaces(items).map(cardHTML).join('')}</div>
+    </section>`;
+  });
+
+  if (filter === 'all' || filter === 'todo') {
+    const todos = DATA[city].todo.filter(t => matchesSearch(t.name, t.note));
+    if (todos.length) {
+      html += `<section class="section">
+        <div class="section-header">
+          <span class="section-emoji">📍</span>
+          <h2 class="section-title">Things To Do</h2>
+          <span class="section-count">${todos.length}</span>
+        </div>
+        <div class="todo-grid">${todos.map(todoHTML).join('')}</div>
+      </section>`;
+    }
   }
-})();
 
+  document.getElementById('sections').innerHTML = html || `<div class="empty-msg">NOTHING MATCHES — TRY ANOTHER SEARCH</div>`;
+}
+
+function renderCrimes() {
+  const bad = sortPlaces(allPlaces(city).filter(p => has(p.rating) && p.rating <= 3)).reverse();
+  const box = document.getElementById('crimes');
+  if (!bad.length || filter !== 'all') { box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="crimes-box">
+    <div class="crimes-title">⚠ the crimes — never again</div>
+    <div class="crimes-list">${bad.map(p => `<span class="crime"><b>${esc(p.name)}</b> · ${p.rating}</span>`).join('')}</div>
+  </div>`;
+}
+
+function render() {
+  renderRail();
+  renderSections();
+  renderCrimes();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTROLS
+   ═══════════════════════════════════════════════════════════ */
+function setCity(c) {
+  city = c;
+  document.documentElement.dataset.city = c;
+  document.getElementById('btn-nyc').setAttribute('aria-pressed', c === 'nyc');
+  document.getElementById('btn-chi').setAttribute('aria-pressed', c === 'chi');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', c === 'nyc' ? '#07090f' : '#050f18');
+  try { localStorage.setItem('dsn-city', c); } catch(e) {}
+  renderHero();
+  render();
+}
+
+function setFilter(btn) {
+  filter = btn.dataset.f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.setAttribute('aria-pressed', b === btn));
+  render();
+}
+
+function toggleSort() {
+  sortBy = sortBy === 'rating' ? 'name' : 'rating';
+  document.getElementById('sortBtn').textContent = sortBy === 'rating' ? '↓ Rating' : 'A–Z';
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PASSWORD GATE
+   ═══════════════════════════════════════════════════════════ */
 function checkPassword() {
-  const val = document.getElementById('pw-input').value;
   const inp = document.getElementById('pw-input');
   const err = document.getElementById('pw-error');
-  if (val === 'huncho') {
+  if (inp.value === 'huncho') {
     sessionStorage.setItem('dsn-unlocked', '1');
-    const gate = document.getElementById('pw-gate');
-    gate.style.opacity = '0';
-    setTimeout(() => gate.style.display = 'none', 400);
-    err.textContent = '';
+    unlock();
   } else {
-    inp.classList.remove('shake');
-    void inp.offsetWidth;
-    inp.classList.add('shake');
-    err.textContent = 'Incorrect password — try again.';
+    inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+    err.textContent = 'nope. try again.';
     inp.value = '';
   }
 }
-</script>
 
-<div id="pw-gate">
-  <div id="pw-card">
-    <h2>🔒 Private</h2>
-    <p>Enter the password to access this page.</p>
-    <input id="pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')checkPassword()">
-    <button id="pw-btn" onclick="checkPassword()">Unlock</button>
-    <div id="pw-error"></div>
-  </div>
-</div>
+function unlock() {
+  const gate = document.getElementById('pw-gate');
+  if (!gate) return;
+  gate.style.opacity = '0';
+  setTimeout(() => gate.remove(), 400);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════ */
+(function init() {
+  let saved = null;
+  try { saved = localStorage.getItem('dsn-city'); } catch(e) {}
+  setCity(saved === 'chi' ? 'chi' : 'nyc');
+
+  if (sessionStorage.getItem('dsn-unlocked') === '1') {
+    unlock();
+  } else {
+    setTimeout(() => document.getElementById('pw-input')?.focus(), 100);
+  }
+})();
+</script>
 
 </body>
 </html>

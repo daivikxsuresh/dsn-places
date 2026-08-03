@@ -390,6 +390,7 @@ body::after {
 }
 .todo-card:hover { background:var(--surface-2); }
 .todo-card.up-next { border-left-color:var(--accent); }
+.todo-card.sn-sent { border-left-color:var(--second); }
 .todo-num { font-family:'Space Mono',monospace; font-size:var(--t-sm); color:var(--muted); min-width:22px; }
 .todo-text { font-size:var(--t-md); font-weight:500; }
 .todo-tag {
@@ -398,6 +399,7 @@ body::after {
 }
 .tag-next { background:rgba(var(--accent-rgb),.15); color:var(--accent); border:1px solid rgba(var(--accent-rgb),.3); }
 .tag-any  { background:rgba(var(--second-rgb),.12); color:var(--second); border:1px solid rgba(var(--second-rgb),.25); }
+.tag-sn   { background:var(--second); color:var(--bg); border:1px solid var(--second); font-weight:700; }
 .tag-city { background:rgba(255,255,255,.04); color:var(--muted); border:1px solid rgba(255,255,255,.1); }
 
 /* ── the crimes ── */
@@ -630,6 +632,30 @@ const DATA = {
       { name:"Broad Nosh Bagels & Deli 🥯", next:true, note:"biscoff cream cheese" },
       { name:"Punjab Meet House 🍛", next:true, note:"jersey city" },
       { name:"Batsu! 🎌", next:true },
+
+      /* SN's sends — insta + tiktok, Aug 3 2026 */
+      { name:"Ichiran 🍜", sn:true, note:"for D when it gets cold" },
+      { name:"I'm Donut? 🍩", sn:true },
+      { name:"Sirrah 🍟", sn:true, note:"unlimited truffle fries" },
+      { name:"Central Perk Tavern ☕️", sn:true, note:"$30 bottomless" },
+      { name:"Love Thy Neighbor 🍶", sn:true, note:"japanese cave bar" },
+      { name:"Uncle Rocco 🍔", sn:true, note:"burger for D" },
+      { name:"Ceres 🍕", sn:true },
+      { name:"Jonny's Pizza 🍕", sn:true },
+      { name:"El Vez 🌮", sn:true, note:"nyc one — there's a philly one too, hold for akka" },
+      { name:"Fonty's 🍽", sn:true },
+      { name:"The Commerce Inn 🍽", sn:true },
+      { name:"Obvio 🍽", sn:true },
+      { name:"Maman 🥐", sn:true },
+      { name:"Noa Bakery 🥖", sn:true },
+      { name:"Caffe Paradiso ☕️", sn:true, note:"mid reviews — one and done" },
+      { name:"HH @ Motek 🍸", sn:true, note:"happy hour" },
+      { name:"HH @ Bar Bonobo 🍸", sn:true, note:"happy hour" },
+      { name:"HH @ Ten11 🍸", sn:true, note:"happy hour 5–7pm" },
+      { name:"HH @ Roey's 🍸", sn:true, note:"happy hour" },
+      { name:"Creature's Rooftop 🌆", sn:true },
+      { name:"DJ Set @ Arlo 🎧", sn:true },
+
       { name:"Watch a Knicks Game 🏀" },
       { name:"ZA w the ZA ifykyk 🍕" },
       { name:"SUMMIT One Vanderbilt 🔭", note:"views + art installs" },
@@ -876,8 +902,11 @@ function cardHTML(p) {
 }
 
 function todoHTML(t, i) {
-  const tag = t.next ? ['tag-next','up next'] : t.any ? ['tag-any','any city'] : ['tag-city', DATA[city].tag];
-  return `<div class="todo-card ${t.next ? 'up-next' : ''}">
+  const tag = t.next ? ['tag-next','up next']
+            : t.sn  ? ['tag-sn','sn sent']
+            : t.any ? ['tag-any','any city']
+            : ['tag-city', DATA[city].tag];
+  return `<div class="todo-card ${t.next ? 'up-next' : ''} ${t.sn ? 'sn-sent' : ''}">
     <span class="todo-num">${String(i+1).padStart(2,'0')}</span>
     <div style="flex:1">
       <div class="todo-text">${esc(t.name)}</div>

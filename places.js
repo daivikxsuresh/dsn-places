@@ -11,7 +11,7 @@ const RAW_PLACES = {
     ['Centurion Amex',9,'',1,true],
     ['Vintage Vangaurd 🎷',0,'Unique, still need seasoning.'],
     ['BBQ 🍖',10], ['Nebula',6.5], ['Beach & Benz',9], ['AKKA',7.5,'#Philly'],
-    ['HQ2 Nightclub',null,'Skilah · Ocean, AC']
+    ['HQ2 Nightclub',null,'Skilah · Ocean, AC'], ['Ocean Casino Resort',null,'AC weekend']
   ],
   food: [
     ['Rubirosa',7], ['L’industrie Pizza',8], ['Mughlai Indian Restaurant',6],
@@ -24,7 +24,7 @@ const RAW_PLACES = {
     ['Junoon',10,'',1,true], ['The Lola',8], ['Joe’s Pizza',7], ['Auntie Anne’s',5],
     ['The District',8], ['Tapville',8,'Happy hour'], ['Taverna Veranda',null],
     ['Domino’s Pizza',8], ['Pizza Twist',8], ['Whealth Kitchen',8], ['Estelle',0],
-    ['Tamarind Tribeca',null], ['Wahlburgers',null,'AC weekend'], ['Amada',null,'Ocean, AC'],
+    ['Wahlburgers',null,'AC weekend'], ['Amada',null,'Ocean, AC'],
     ['Gemma',null,'Anniversary dinner ♡']
   ],
   drinks: [
@@ -40,7 +40,7 @@ const RAW_PLACES = {
     ['The Original Fudge Kitchen',100], ['Maggies Munchies',4], ['Cold Stone',10]
   ]
 };
-const NJ = new Set(['The Ainsworth','Honest JSQ','HQ2 Nightclub','Wahlburgers','Amada']);
+const NJ = new Set(['The Ainsworth','Honest JSQ','HQ2 Nightclub','Ocean Casino Resort','Wahlburgers','Amada']);
 const PLACES = Object.entries(RAW_PLACES).flatMap(([category, rows]) => rows.map(([name,rating,note='',visits=1,star=false]) => ({
   id: category+'-'+name.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-$/,''),
   name, rating, note, visits, star, category, nj: NJ.has(name)

@@ -27,7 +27,7 @@ let checks=0;function ok(condition,message){assert(condition,message);checks++;c
  await ev('window.scrollTo({top:0,behavior:"instant"})');await shot('desktop-hero');await fit();
  ok(await ev('PLACES.length===68 && DATES.length===6'),'All 68 places and six dates loaded');
  ok(await ev('PLACES.find(p=>p.name==="The Original Fudge Kitchen").rating===100 && PLACES.find(p=>p.name==="Taco Bell").rating===12 && PLACES.find(p=>p.name==="Taverna Veranda").rating===null && PLACES.find(p=>p.name==="Venchi").visits===2'),'Special ratings and repeat preserved');
- for(const [cat,count] of [['vibes',9],['food',37],['drinks',13],['dessert',9],['nj',5]]){await click(`[data-category="${cat}"]`);ok(await ev('document.querySelectorAll(".place-card").length')===count,cat+' filter');}
+ for(const [cat,count] of [['vibes',10],['food',36],['drinks',13],['dessert',9],['nj',6]]){await click(`[data-category="${cat}"]`);ok(await ev('document.querySelectorAll(".place-card").length')===count,cat+' filter');}
  await reset();await fill('#search','joes');ok(await ev('document.querySelectorAll(".place-card").length===1 && $("places-grid").textContent.includes("Joe’s Pizza")'),'Punctuation-insensitive search');
  await fill('#search','nothing-matches-this');ok(await ev('!$("empty-state").hidden'),'Empty search state');await click('#reset');
  await click('#favorites-only');ok(await ev('!$("empty-state").hidden'),'Empty saved state');await click('#favorites-only');

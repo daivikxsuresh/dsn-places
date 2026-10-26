@@ -25,9 +25,9 @@ let checks=0;function ok(condition,message){assert(condition,message);checks++;c
  await cdp('Runtime.enable');await cdp('Page.enable');await viewport(1440,1000);await cdp('Page.navigate',{url});await until('document.readyState==="complete" && typeof PLACES!=="undefined"');await ev('document.fonts.ready');
  await shot('desktop-gate');await key('Escape');ok(await ev('$("gate").open'),'Gate cannot escape');await fill('#password','wrong');await click('#gate-form button');ok(await ev('$("gate-error").textContent.includes("Not quite")'),'Wrong password feedback');await unlock();
  await ev('window.scrollTo({top:0,behavior:"instant"})');await shot('desktop-hero');await fit();
- ok(await ev('PLACES.length===63 && DATES.length===6'),'All 63 places and six dates loaded');
+ ok(await ev('PLACES.length===68 && DATES.length===6'),'All 68 places and six dates loaded');
  ok(await ev('PLACES.find(p=>p.name==="The Original Fudge Kitchen").rating===100 && PLACES.find(p=>p.name==="Taco Bell").rating===12 && PLACES.find(p=>p.name==="Taverna Veranda").rating===null && PLACES.find(p=>p.name==="Venchi").visits===2'),'Special ratings and repeat preserved');
- for(const [cat,count] of [['vibes',8],['food',33],['drinks',13],['dessert',9]]){await click(`[data-category="${cat}"]`);ok(await ev('document.querySelectorAll(".place-card").length')===count,cat+' filter');}
+ for(const [cat,count] of [['vibes',9],['food',37],['drinks',13],['dessert',9],['nj',5]]){await click(`[data-category="${cat}"]`);ok(await ev('document.querySelectorAll(".place-card").length')===count,cat+' filter');}
  await reset();await fill('#search','joes');ok(await ev('document.querySelectorAll(".place-card").length===1 && $("places-grid").textContent.includes("Joe’s Pizza")'),'Punctuation-insensitive search');
  await fill('#search','nothing-matches-this');ok(await ev('!$("empty-state").hidden'),'Empty search state');await click('#reset');
  await click('#favorites-only');ok(await ev('!$("empty-state").hidden'),'Empty saved state');await click('#favorites-only');
@@ -36,7 +36,7 @@ let checks=0;function ok(condition,message){assert(condition,message);checks++;c
  await click('#favorites-only');await click('[data-id="vibes-daintree-les-rooftop-bar"]');ok(await ev('saved.size===0 && !$("empty-state").hidden'),'Unsave from saved view');await click('#favorites-only');
  await click('[data-find="Junoon"]');ok(await ev('document.querySelectorAll(".place-card").length===1 && $("places-grid").textContent.includes("Junoon")'),'Spotlight find links');await shot('desktop-filtered');await reset();
  await ev('$("sort").value="rating";$("sort").dispatchEvent(new Event("change",{bubbles:true}))');await wait(100);ok(await ev('$("sort").value==="rating" && document.querySelector(".place-card h3").textContent.includes("Fudge")'),'Highest-rating sort');
- ok(await ev('[...document.querySelectorAll(".place-card h3")].at(-1).textContent.includes("Taverna")'),'Unrated sorted last');
+ ok(await ev('(()=>{const r=[...document.querySelectorAll(".place-card .rating")].map(e=>e.classList.contains("unrated"));return r.indexOf(true)>0&&r.slice(r.indexOf(true)).every(Boolean);})()'),'Unrated sorted last');
  await ev('$("sort").value="name";$("sort").dispatchEvent(new Event("change",{bubbles:true}))');await wait(100);ok(await ev('$("sort").value==="name" && document.querySelector(".place-card h3").textContent.includes("AKKA")'),'Alphabetical sort');
  await ev('$("sort").value="low";$("sort").dispatchEvent(new Event("change",{bubbles:true}))');await wait(100);ok(await ev('$("sort").value==="low" && document.querySelector(".rating").textContent.startsWith("0")'),'Lowest-rating sort');
  await click('#pick-date');await shot('desktop-date-dialog');const pick=await ev('currentPick');await click('#repick');ok(await ev('currentPick')!==pick,'Date reroll changes pick');await key('Escape');ok(await ev('!$("date-dialog").open'),'Escape dismisses date dialog');

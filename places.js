@@ -10,7 +10,8 @@ const RAW_PLACES = {
     ['Daintree LES Rooftop Bar',7], ['cloudM Rooftop Bar',6],
     ['Centurion Amex',9,'',1,true],
     ['Vintage Vangaurd 🎷',0,'Unique, still need seasoning.'],
-    ['BBQ 🍖',10], ['Nebula',6.5], ['Beach & Benz',9], ['AKKA',7.5,'#Philly']
+    ['BBQ 🍖',10], ['Nebula',6.5], ['Beach & Benz',9], ['AKKA',7.5,'#Philly'],
+    ['HQ2 Nightclub',null,'Skilah · Ocean, AC']
   ],
   food: [
     ['Rubirosa',7], ['L’industrie Pizza',8], ['Mughlai Indian Restaurant',6],
@@ -22,7 +23,9 @@ const RAW_PLACES = {
     ['Ambassadors Clubhouse',10,'',1,true], ['CAVA',7.5], ['Parata Junction',7.5],
     ['Junoon',10,'',1,true], ['The Lola',8], ['Joe’s Pizza',7], ['Auntie Anne’s',5],
     ['The District',8], ['Tapville',8,'Happy hour'], ['Taverna Veranda',null],
-    ['Domino’s Pizza',8], ['Pizza Twist',8], ['Whealth Kitchen',8], ['Estelle',0]
+    ['Domino’s Pizza',8], ['Pizza Twist',8], ['Whealth Kitchen',8], ['Estelle',0],
+    ['Tamarind Tribeca',null], ['Wahlburgers',null,'AC weekend'], ['Amada',null,'Ocean, AC'],
+    ['Gemma',null,'Anniversary dinner ♡']
   ],
   drinks: [
     ['Spring Lounge',10,'fought for a nic here omg'], ['Balazem',8,'D’s rating'],
@@ -37,9 +40,10 @@ const RAW_PLACES = {
     ['The Original Fudge Kitchen',100], ['Maggies Munchies',4], ['Cold Stone',10]
   ]
 };
+const NJ = new Set(['The Ainsworth','Honest JSQ','HQ2 Nightclub','Wahlburgers','Amada']);
 const PLACES = Object.entries(RAW_PLACES).flatMap(([category, rows]) => rows.map(([name,rating,note='',visits=1,star=false]) => ({
   id: category+'-'+name.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-$/,''),
-  name, rating, note, visits, star, category
+  name, rating, note, visits, star, category, nj: NJ.has(name)
 })));
 const DATES = [
   { id:'brooklyn-flea', name:'Brooklyn Flea Market', note:'A little treasure hunting.', icon:'🛍️' },

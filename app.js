@@ -19,16 +19,16 @@ function persist(key, values) {
 function normalize(value) { return value.normalize('NFKD').toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
 function renderPlaces(animate=false) {
   const query=normalize($('search').value);
-  let places=PLACES.filter(p=>(category==='all'||p.category===category)&&(!onlySaved||saved.has(p.id))&&normalize(p.name+' '+p.note+' '+p.category).includes(query));
+  let places=PLACES.filter(p=>(category==='all'||p.category===category||(category==='nj'&&p.nj))&&(!onlySaved||saved.has(p.id))&&normalize(p.name+' '+p.note+' '+p.category+(p.nj?' nj new jersey':'')).includes(query));
   const sort=$('sort').value;
   if(sort==='name') places.sort((a,b)=>a.name.localeCompare(b.name));
-  if(sort==='rating'||sort==='low') places.sort((a,b)=>a.rating===null?1:b.rating===null?-1:(sort==='rating'?b.rating-a.rating:a.rating-b.rating));
-  $('result-count').textContent=`${places.length} ${places.length===1?'place':'places'}${category==='all'?'':` · ${CATEGORIES[category].label}`}${onlySaved?' · saved with love':''}`;
+  if(sort==='rating'||sort==='low') places.sort((a,b)=>a.rating===null?(b.rating===null?0:1):b.rating===null?-1:(sort==='rating'?b.rating-a.rating:a.rating-b.rating));
+  $('result-count').textContent=`${places.length} ${places.length===1?'place':'places'}${category==='all'?'':` · ${category==='nj'?'NJ':CATEGORIES[category].label}`}${onlySaved?' · saved with love':''}`;
   $('places-grid').innerHTML=places.map((p,i)=>{
     const cat=CATEGORIES[p.category];
     let tag=p.visits>1?`<span class="visit">${p.visits} visits ♡</span>`:p.rating>=10?'<span class="rating-tag">hall of fame ✧</span>':p.rating>8?'<span class="rating-tag">one to revisit</span>':p.rating!==null&&p.rating<=3?'<span class="rating-tag low">for the plot…</span>':'';
     return `<article class="place-card${animate?' enter':''}"${animate?` style="animation-delay:${Math.min(i,5)*18}ms"`:''}>
-      <div class="card-top"><span class="category-label"><span aria-hidden="true">${cat.icon}</span>${cat.label}</span><button class="save-place" data-id="${p.id}" aria-pressed="${saved.has(p.id)}" aria-label="Save ${esc(p.name)}">${saved.has(p.id)?'♥':'♡'}</button></div>
+      <div class="card-top"><span class="category-label"><span aria-hidden="true">${cat.icon}</span>${cat.label}${p.nj?' · NJ':''}</span><button class="save-place" data-id="${p.id}" aria-pressed="${saved.has(p.id)}" aria-label="Save ${esc(p.name)}">${saved.has(p.id)?'♥':'♡'}</button></div>
       <h3>${esc(p.name)}${p.star?' <span class="star" aria-label="Starred in our list">★</span>':''}</h3>
       <p class="place-note">${esc(p.note)}</p>
       <div class="card-bottom">${p.rating===null?'<span class="rating unrated">Not rated yet</span>':`<span class="rating" aria-label="Rated ${p.rating} out of 10">${p.rating}<small>/10</small></span>`}${tag}</div>
@@ -48,7 +48,7 @@ function resetFilters() {
 }
 document.querySelectorAll('[data-category]').forEach(button=>{
   const key=button.dataset.category;
-  button.querySelector('span').textContent=key==='all'?PLACES.length:PLACES.filter(p=>p.category===key).length;
+  button.querySelector('span').textContent=key==='all'?PLACES.length:PLACES.filter(p=>key==='nj'?p.nj:p.category===key).length;
   button.addEventListener('click',()=>{updateCategory(key);renderPlaces(true);});
 });
 $('place-total').textContent=PLACES.length;
